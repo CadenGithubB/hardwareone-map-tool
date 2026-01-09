@@ -122,6 +122,103 @@
             height: 16px;
         }
         
+        .section-title {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+            margin-bottom: 6px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+        }
+        
+        .section-title:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+        
+        .slider-group {
+            margin-bottom: 15px;
+        }
+        
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.85em;
+            color: #aaa;
+        }
+        
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-row input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #4cc9f0;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            min-width: 60px;
+            text-align: right;
+            font-size: 0.85em;
+            color: #4cc9f0;
+        }
+        
+        .size-warning {
+            background: #3a2a1a;
+            border: 1px solid #ff9800;
+            color: #ff9800;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            display: none;
+        }
+        
+        .size-warning.active {
+            display: block;
+        }
+        
+        .size-bar {
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .size-bar-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.3s, background 0.3s;
+        }
+        
+        .size-bar-fill.warning {
+            background: #ff9800;
+        }
+        
+        .size-bar-fill.danger {
+            background: #f44336;
+        }
+        
         .stats {
             background: #1a1a2e;
             padding: 12px;
@@ -278,14 +375,25 @@
                 <div class="form-group">
                     <label>Include Features</label>
                     <div class="checkbox-group">
+                        <div class="section-title">Roads</div>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="highways" checked>
+                            Highways
+                        </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="majorRoads" checked>
                             Major Roads
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="minorRoads" checked>
+                            <input type="checkbox" id="minorRoads">
                             Minor Roads
                         </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="paths">
+                            Paths/Trails
+                        </label>
+                        
+                        <div class="section-title">Features</div>
                         <label class="checkbox-item">
                             <input type="checkbox" id="water" checked>
                             Water
@@ -294,7 +402,38 @@
                             <input type="checkbox" id="parks" checked>
                             Parks
                         </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="railways">
+                            Railways
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="buildings">
+                            Buildings
+                        </label>
                     </div>
+                </div>
+                
+                <div class="slider-group">
+                    <label>Detail Level (geometry simplification)</label>
+                    <div class="slider-row">
+                        <input type="range" id="detailLevel" min="1" max="5" value="3">
+                        <span class="slider-value" id="detailValue">Medium</span>
+                    </div>
+                </div>
+                
+                <div class="slider-group">
+                    <label>Target Size Budget</label>
+                    <div class="slider-row">
+                        <input type="range" id="sizeBudget" min="100" max="1000" step="50" value="600">
+                        <span class="slider-value" id="budgetValue">600 KB</span>
+                    </div>
+                    <div class="size-bar">
+                        <div class="size-bar-fill" id="sizeBarFill"></div>
+                    </div>
+                </div>
+                
+                <div class="size-warning" id="sizeWarning">
+                    ⚠️ Estimated size exceeds budget. Try reducing area or features.
                 </div>
                 
                 <div class="stats">
@@ -458,6 +597,9 @@
             const estKB = estimateSize(areaKm2);
             document.getElementById('estSize').textContent = estKB + ' KB';
             
+            // Update size warning
+            updateSizeWarning(estKB);
+            
             // Feature count will be updated after fetch
             document.getElementById('featureCount').textContent = '~' + Math.round(areaKm2 * 50);
         }
@@ -481,11 +623,52 @@
         
         function estimateSize(areaKm2) {
             let bytesPerKm2 = 0;
-            if (document.getElementById('majorRoads').checked) bytesPerKm2 += 15000;
-            if (document.getElementById('minorRoads').checked) bytesPerKm2 += 25000;
-            if (document.getElementById('water').checked) bytesPerKm2 += 5000;
-            if (document.getElementById('parks').checked) bytesPerKm2 += 3000;
+            if (document.getElementById('highways').checked) bytesPerKm2 += 5000;
+            if (document.getElementById('majorRoads').checked) bytesPerKm2 += 12000;
+            if (document.getElementById('minorRoads').checked) bytesPerKm2 += 35000;
+            if (document.getElementById('paths').checked) bytesPerKm2 += 15000;
+            if (document.getElementById('water').checked) bytesPerKm2 += 8000;
+            if (document.getElementById('parks').checked) bytesPerKm2 += 5000;
+            if (document.getElementById('railways').checked) bytesPerKm2 += 3000;
+            if (document.getElementById('buildings').checked) bytesPerKm2 += 80000;
+            
+            // Adjust for detail level (simplification)
+            const detailLevel = parseInt(document.getElementById('detailLevel').value);
+            const detailMultiplier = [0.4, 0.6, 1.0, 1.5, 2.0][detailLevel - 1];
+            bytesPerKm2 *= detailMultiplier;
+            
             return Math.round(areaKm2 * bytesPerKm2 / 1024);
+        }
+        
+        function updateSizeWarning(estKB) {
+            const budget = parseInt(document.getElementById('sizeBudget').value);
+            const warning = document.getElementById('sizeWarning');
+            const barFill = document.getElementById('sizeBarFill');
+            const percent = Math.min(100, (estKB / budget) * 100);
+            
+            barFill.style.width = percent + '%';
+            barFill.className = 'size-bar-fill';
+            
+            if (estKB > budget * 1.5) {
+                barFill.classList.add('danger');
+                warning.classList.add('active');
+            } else if (estKB > budget) {
+                barFill.classList.add('warning');
+                warning.classList.add('active');
+            } else {
+                warning.classList.remove('active');
+            }
+        }
+        
+        function updateDetailLabel() {
+            const level = parseInt(document.getElementById('detailLevel').value);
+            const labels = ['Minimal', 'Low', 'Medium', 'High', 'Maximum'];
+            document.getElementById('detailValue').textContent = labels[level - 1];
+        }
+        
+        function updateBudgetLabel() {
+            const budget = document.getElementById('sizeBudget').value;
+            document.getElementById('budgetValue').textContent = budget + ' KB';
         }
         
         // =============================================================================
@@ -556,17 +739,32 @@
             
             let query = `[out:json][bbox:${bbox}];(\n`;
             
+            // Roads
+            if (document.getElementById('highways').checked) {
+                query += `way["highway"~"motorway|motorway_link|trunk|trunk_link"];\n`;
+            }
             if (document.getElementById('majorRoads').checked) {
-                query += `way["highway"~"motorway|trunk|primary|secondary"];\n`;
+                query += `way["highway"~"primary|secondary|primary_link|secondary_link"];\n`;
             }
             if (document.getElementById('minorRoads').checked) {
                 query += `way["highway"~"tertiary|residential|unclassified|service"];\n`;
             }
+            if (document.getElementById('paths').checked) {
+                query += `way["highway"~"footway|path|cycleway|track|pedestrian"];\n`;
+            }
+            
+            // Features
             if (document.getElementById('water').checked) {
-                query += `way["natural"="water"];\nway["waterway"];\n`;
+                query += `way["natural"="water"];\nway["waterway"~"river|stream|canal"];\n`;
             }
             if (document.getElementById('parks').checked) {
-                query += `way["leisure"="park"];\nway["landuse"="grass"];\n`;
+                query += `way["leisure"="park"];\nway["landuse"~"grass|forest|meadow"];\n`;
+            }
+            if (document.getElementById('railways').checked) {
+                query += `way["railway"~"rail|light_rail|subway|tram"];\n`;
+            }
+            if (document.getElementById('buildings').checked) {
+                query += `way["building"];\n`;
             }
             
             query += `);out geom;`;
@@ -579,10 +777,14 @@
         
         // Feature types matching device-side enum
         const FEATURE_TYPES = {
+            ROAD_HIGHWAY: 0x00,
             ROAD_MAJOR: 0x01,
             ROAD_MINOR: 0x02,
+            ROAD_PATH: 0x03,
             WATER: 0x10,
-            PARK: 0x11
+            PARK: 0x11,
+            RAILWAY: 0x20,
+            BUILDING: 0x30
         };
         
         function convertToHWMap(osmData) {
@@ -599,8 +801,10 @@
                 const featureType = classifyFeature(element.tags);
                 if (featureType === null) continue;
                 
-                // Simplify geometry
-                const points = simplifyPoints(element.geometry, 0.0001);
+                // Simplify geometry based on detail level
+                const detailLevel = parseInt(document.getElementById('detailLevel').value);
+                const tolerances = [0.0005, 0.0003, 0.0001, 0.00005, 0.00002];
+                const points = simplifyPoints(element.geometry, tolerances[detailLevel - 1]);
                 if (points.length < 2) continue;
                 
                 features.push({
@@ -701,21 +905,42 @@
         function classifyFeature(tags) {
             if (!tags) return null;
             
+            // Roads
             if (tags.highway) {
-                if (['motorway', 'trunk', 'primary', 'secondary'].includes(tags.highway)) {
+                if (['motorway', 'motorway_link', 'trunk', 'trunk_link'].includes(tags.highway)) {
+                    return FEATURE_TYPES.ROAD_HIGHWAY;
+                }
+                if (['primary', 'secondary', 'primary_link', 'secondary_link'].includes(tags.highway)) {
                     return FEATURE_TYPES.ROAD_MAJOR;
                 }
                 if (['tertiary', 'residential', 'unclassified', 'service'].includes(tags.highway)) {
                     return FEATURE_TYPES.ROAD_MINOR;
                 }
+                if (['footway', 'path', 'cycleway', 'track', 'pedestrian'].includes(tags.highway)) {
+                    return FEATURE_TYPES.ROAD_PATH;
+                }
             }
             
+            // Railways
+            if (tags.railway) {
+                if (['rail', 'light_rail', 'subway', 'tram'].includes(tags.railway)) {
+                    return FEATURE_TYPES.RAILWAY;
+                }
+            }
+            
+            // Water
             if (tags.natural === 'water' || tags.waterway) {
                 return FEATURE_TYPES.WATER;
             }
             
-            if (tags.leisure === 'park' || tags.landuse === 'grass') {
+            // Parks and green areas
+            if (tags.leisure === 'park' || ['grass', 'forest', 'meadow'].includes(tags.landuse)) {
                 return FEATURE_TYPES.PARK;
+            }
+            
+            // Buildings
+            if (tags.building) {
+                return FEATURE_TYPES.BUILDING;
             }
             
             return null;
@@ -783,6 +1008,17 @@
         // Update stats when checkboxes change
         document.querySelectorAll('.checkbox-group input').forEach(cb => {
             cb.addEventListener('change', updateStats);
+        });
+        
+        // Slider event listeners
+        document.getElementById('detailLevel').addEventListener('input', () => {
+            updateDetailLabel();
+            updateStats();
+        });
+        
+        document.getElementById('sizeBudget').addEventListener('input', () => {
+            updateBudgetLabel();
+            updateStats();
         });
     </script>
 </body>
