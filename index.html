@@ -675,6 +675,20 @@
         // MAP GENERATION
         // =============================================================================
         
+        // Debug mode - set to true to enable verbose logging
+        const DEBUG = true;
+        
+        function debugLog(category, message, data = null) {
+            if (!DEBUG) return;
+            const timestamp = new Date().toISOString().substr(11, 12);
+            const prefix = `[${timestamp}] [${category}]`;
+            if (data !== null) {
+                console.log(prefix, message, data);
+            } else {
+                console.log(prefix, message);
+            }
+        }
+        
         async function generateMap() {
             if (!selectedBounds) {
                 setStatus('error', 'Please select an area first');
@@ -686,12 +700,20 @@
             setStatus('working', 'Fetching map data from OpenStreetMap...');
             setProgress(10);
             
+            debugLog('INIT', '=== Starting map generation ===');
+            debugLog('BOUNDS', 'Selected bounds:', {
+                sw: selectedBounds.getSouthWest(),
+                ne: selectedBounds.getNorthEast()
+            });
+            
             try {
                 // Build Overpass query
                 const query = buildOverpassQuery();
+                debugLog('QUERY', 'Overpass query:', query);
                 setProgress(20);
                 
                 // Fetch data
+                debugLog('FETCH', 'Fetching from Overpass API...');
                 const response = await fetch('https://overpass-api.de/api/interpreter', {
                     method: 'POST',
                     body: query
@@ -705,12 +727,14 @@
                 setProgress(50);
                 
                 const data = await response.json();
+                debugLog('FETCH', 'Received elements:', data.elements?.length || 0);
                 
                 setStatus('working', 'Converting to binary format...');
                 setProgress(70);
                 
                 // Convert to binary
                 const hwmapBlob = convertToHWMap(data);
+                debugLog('OUTPUT', 'Generated blob size:', hwmapBlob.size + ' bytes');
                 
                 setProgress(90);
                 
@@ -722,8 +746,13 @@
                 
                 setProgress(100);
                 setStatus('success', 'Download started! Upload to device at /maps/');
+                debugLog('DONE', '=== Map generation complete ===');
                 
             } catch (error) {
+                debugLog('ERROR', 'Generation failed:', {
+                    message: error.message,
+                    stack: error.stack
+                });
                 setStatus('error', 'Error: ' + error.message);
                 console.error(error);
             } finally {
@@ -792,35 +821,80 @@
             const ne = selectedBounds.getNorthEast();
             const regionName = document.getElementById('regionName').value.substring(0, 15);
             
+            debugLog('CONVERT', 'Starting conversion...');
+            debugLog('CONVERT', 'Input elements:', osmData.elements?.length || 0);
+            
             // Process features
             const features = [];
+            const detailLevel = parseInt(document.getElementById('detailLevel').value);
+            const tolerances = [0.0005, 0.0003, 0.0001, 0.00005, 0.00002];
+            const tolerance = tolerances[detailLevel - 1];
+            
+            debugLog('CONVERT', 'Detail level:', detailLevel, 'Tolerance:', tolerance);
+            
+            let skippedNoGeom = 0;
+            let skippedNoType = 0;
+            let skippedTooShort = 0;
             
             for (const element of osmData.elements) {
-                if (element.type !== 'way' || !element.geometry) continue;
+                if (element.type !== 'way' || !element.geometry) {
+                    skippedNoGeom++;
+                    continue;
+                }
                 
                 const featureType = classifyFeature(element.tags);
-                if (featureType === null) continue;
+                if (featureType === null) {
+                    skippedNoType++;
+                    continue;
+                }
                 
                 // Simplify geometry based on detail level
-                const detailLevel = parseInt(document.getElementById('detailLevel').value);
-                const tolerances = [0.0005, 0.0003, 0.0001, 0.00005, 0.00002];
-                const points = simplifyPoints(element.geometry, tolerances[detailLevel - 1]);
-                if (points.length < 2) continue;
+                let points = simplifyPoints(element.geometry, tolerance);
+                if (points.length < 2) {
+                    skippedTooShort++;
+                    continue;
+                }
                 
-                features.push({
-                    type: featureType,
-                    points: points
-                });
+                // Split features with more than 255 points (uint8 limit)
+                while (points.length > 0) {
+                    const chunk = points.slice(0, 255);
+                    if (chunk.length >= 2) {
+                        features.push({
+                            type: featureType,
+                            points: chunk
+                        });
+                    }
+                    if (points.length <= 255) break;
+                    // Keep last point as first of next chunk for continuity
+                    points = points.slice(254);
+                }
             }
+            
+            debugLog('CONVERT', 'Skipped - no geometry:', skippedNoGeom);
+            debugLog('CONVERT', 'Skipped - no type match:', skippedNoType);
+            debugLog('CONVERT', 'Skipped - too short:', skippedTooShort);
+            debugLog('CONVERT', 'Final feature count:', features.length);
+            
+            // Log point distribution
+            let totalPoints = 0;
+            let maxPoints = 0;
+            for (const f of features) {
+                totalPoints += f.points.length;
+                if (f.points.length > maxPoints) maxPoints = f.points.length;
+            }
+            debugLog('CONVERT', 'Total points:', totalPoints, 'Max points per feature:', maxPoints);
             
             // Update feature count display
             document.getElementById('featureCount').textContent = features.length;
             
             // Calculate buffer size
-            let bufferSize = 32; // Header
+            // Header: 4 (magic) + 2 (version) + 2 (flags) + 16 (bounds) + 4 (count) + 8 (name) = 36
+            let bufferSize = 36; // Header
             for (const f of features) {
                 bufferSize += 2 + 8 + (f.points.length - 1) * 4; // type + count + first point + deltas
             }
+            
+            debugLog('BUFFER', 'Calculated buffer size:', bufferSize + ' bytes');
             
             // Create buffer
             const buffer = new ArrayBuffer(bufferSize);
@@ -861,8 +935,14 @@
                 view.setUint8(offset++, i < regionName.length ? regionName.charCodeAt(i) : 0);
             }
             
+            debugLog('BUFFER', 'Header written, offset now:', offset);
+            
             // Write features
+            let featureIdx = 0;
             for (const feature of features) {
+                const featureStartOffset = offset;
+                const expectedSize = 2 + 8 + (feature.points.length - 1) * 4;
+                
                 // Type
                 view.setUint8(offset++, feature.type);
                 
@@ -882,6 +962,20 @@
                 let prevLon = firstLon;
                 
                 for (let i = 1; i < feature.points.length; i++) {
+                    // Check buffer bounds before writing
+                    if (offset + 4 > bufferSize) {
+                        debugLog('ERROR', 'Buffer overflow!', {
+                            featureIdx,
+                            pointIdx: i,
+                            offset,
+                            bufferSize,
+                            featurePoints: feature.points.length,
+                            expectedSize,
+                            featureStartOffset
+                        });
+                        throw new Error(`Buffer overflow at feature ${featureIdx}, point ${i}`);
+                    }
+                    
                     const lat = Math.round(feature.points[i].lat * 1000000);
                     const lon = Math.round(feature.points[i].lon * 1000000);
                     
@@ -897,7 +991,11 @@
                     prevLat = lat;
                     prevLon = lon;
                 }
+                
+                featureIdx++;
             }
+            
+            debugLog('BUFFER', 'All features written, final offset:', offset, 'buffer size:', bufferSize);
             
             return new Blob([buffer], { type: 'application/octet-stream' });
         }
