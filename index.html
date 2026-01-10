@@ -24,7 +24,8 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 90%;
+            width: 90%;
             margin: 0 auto;
             padding: 20px;
         }
@@ -60,7 +61,7 @@
         }
         
         #map {
-            height: 500px;
+            height: 650px;
             border-radius: 8px;
             border: 2px solid #333;
         }
@@ -124,19 +125,48 @@
         
         .section-title {
             font-size: 0.8em;
-            color: #666;
+            color: #888;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-top: 10px;
-            margin-bottom: 6px;
-            padding-top: 8px;
-            border-top: 1px solid #333;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            padding: 6px 8px;
+            background: #1a1a2e;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
         }
         
-        .section-title:first-child {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
+        .section-title:hover {
+            background: #222;
+        }
+        
+        .section-title::after {
+            content: '▼';
+            font-size: 0.7em;
+            transition: transform 0.2s;
+        }
+        
+        .section-title.collapsed::after {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            padding: 6px 0;
+            overflow: hidden;
+            transition: max-height 0.2s, opacity 0.2s;
+        }
+        
+        .section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding: 0;
         }
         
         .slider-group {
@@ -274,8 +304,25 @@
             margin-bottom: 10px;
         }
         
-        .btn-secondary:hover {
+        .btn-secondary:hover:not(:disabled) {
             background: #444;
+        }
+        
+        .btn-secondary:disabled {
+            background: #222;
+            color: #555;
+            cursor: not-allowed;
+        }
+        
+        .btn-clear {
+            background: #3a2020;
+            color: #f44336;
+            border: 1px solid #f44336;
+            margin-top: 10px;
+        }
+        
+        .btn-clear:hover {
+            background: #4a2a2a;
         }
         
         .status {
@@ -346,6 +393,76 @@
             width: 0%;
             transition: width 0.3s;
         }
+        
+        .preview-panel {
+            margin-top: 20px;
+            background: #16213e;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+        }
+        
+        .preview-panel.active {
+            display: block;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .preview-header h3 {
+            color: #4cc9f0;
+            font-size: 1em;
+            margin: 0;
+        }
+        
+        .preview-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        
+        .preview-close:hover {
+            color: #fff;
+        }
+        
+        .preview-canvas-container {
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #previewCanvas {
+            display: block;
+            width: 100%;
+            height: 400px;
+        }
+        
+        .preview-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 0.8em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body>
@@ -374,41 +491,124 @@
                 
                 <div class="form-group">
                     <label>Include Features</label>
-                    <div class="checkbox-group">
-                        <div class="section-title">Roads</div>
+                    
+                    <div class="section-title" onclick="toggleSection(this)">Highways</div>
+                    <div class="section-content">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="highways" checked>
-                            Highways
+                            <input type="checkbox" id="motorways" checked>
+                            Motorways
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="majorRoads" checked>
-                            Major Roads
+                            <input type="checkbox" id="trunkRoads" checked>
+                            Trunk/US Routes
+                        </label>
+                    </div>
+                    
+                    <div class="section-title" onclick="toggleSection(this)">Roads</div>
+                    <div class="section-content">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="primaryRoads" checked>
+                            Primary
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="minorRoads">
-                            Minor Roads
+                            <input type="checkbox" id="secondaryRoads" checked>
+                            Secondary
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="paths">
-                            Paths/Trails
-                        </label>
-                        
-                        <div class="section-title">Features</div>
-                        <label class="checkbox-item">
-                            <input type="checkbox" id="water" checked>
-                            Water
+                            <input type="checkbox" id="tertiaryRoads">
+                            Tertiary
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="parks" checked>
+                            <input type="checkbox" id="residentialRoads">
+                            Residential
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="serviceRoads">
+                            Service
+                        </label>
+                    </div>
+                    
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Paths</div>
+                    <div class="section-content collapsed">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="footways">
+                            Footways
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="cycleways">
+                            Bike Paths
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="tracks">
+                            Trails
+                        </label>
+                    </div>
+                    
+                    <div class="section-title" onclick="toggleSection(this)">Water</div>
+                    <div class="section-content">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="waterBodies" checked>
+                            Lakes/Ponds
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="waterways">
+                            Rivers
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="coastlines">
+                            Coastlines
+                        </label>
+                    </div>
+                    
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Nature</div>
+                    <div class="section-content collapsed">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="parks">
                             Parks
                         </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="forests">
+                            Forests
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="grassland">
+                            Grassland
+                        </label>
+                    </div>
+                    
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Infrastructure</div>
+                    <div class="section-content collapsed">
                         <label class="checkbox-item">
                             <input type="checkbox" id="railways">
                             Railways
                         </label>
                         <label class="checkbox-item">
+                            <input type="checkbox" id="bridges">
+                            Bridges
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="powerlines">
+                            Power Lines
+                        </label>
+                    </div>
+                    
+                    <div class="section-title collapsed" onclick="toggleSection(this)">Land Use</div>
+                    <div class="section-content collapsed">
+                        <label class="checkbox-item">
                             <input type="checkbox" id="buildings">
                             Buildings
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="industrial">
+                            Industrial
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="commercial">
+                            Commercial
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="residential">
+                            Residential
                         </label>
                     </div>
                 </div>
@@ -416,21 +616,34 @@
                 <div class="slider-group">
                     <label>Detail Level (geometry simplification)</label>
                     <div class="slider-row">
-                        <input type="range" id="detailLevel" min="1" max="5" value="3">
-                        <span class="slider-value" id="detailValue">Medium</span>
+                        <input type="range" id="detailLevel" min="1" max="5" value="2">
+                        <span class="slider-value" id="detailValue">Low</span>
+                    </div>
+                </div>
+                
+                <div class="slider-group">
+                    <label>Max Points per Road (more = smoother curves)</label>
+                    <div class="slider-row">
+                        <input type="range" id="maxPoints" min="5" max="50" step="5" value="15">
+                        <span class="slider-value" id="maxPointsValue">15 pts</span>
                     </div>
                 </div>
                 
                 <div class="slider-group">
                     <label>Target Size Budget</label>
                     <div class="slider-row">
-                        <input type="range" id="sizeBudget" min="100" max="1000" step="50" value="600">
-                        <span class="slider-value" id="budgetValue">600 KB</span>
+                        <input type="range" id="sizeBudget" min="50" max="25000" step="50" value="500">
+                        <span class="slider-value" id="budgetValue">500 KB</span>
                     </div>
                     <div class="size-bar">
                         <div class="size-bar-fill" id="sizeBarFill"></div>
                     </div>
                 </div>
+                
+                <label class="checkbox-item" style="margin-bottom:10px;">
+                    <input type="checkbox" id="autoFitBudget" checked>
+                    <span>Auto-trim to fit budget (drops least important features)</span>
+                </label>
                 
                 <div class="size-warning" id="sizeWarning">
                     ⚠️ Estimated size exceeds budget. Try reducing area or features.
@@ -451,6 +664,15 @@
                     </div>
                 </div>
                 
+                <div id="sizeBreakdown" class="size-breakdown" style="display:none;margin-top:10px;padding:8px;background:#1a1a2e;border-radius:4px;font-size:0.8em;">
+                    <div style="color:#888;margin-bottom:4px;">Size breakdown (est.):</div>
+                    <div id="breakdownContent"></div>
+                </div>
+                
+                <button class="btn btn-secondary" id="previewBtn" onclick="previewMap()" disabled style="margin-bottom:8px;">
+                    👁️ Preview Selection
+                </button>
+                
                 <button class="btn btn-primary" id="generateBtn" onclick="generateMap()" disabled>
                     🗺️ Generate Map File
                 </button>
@@ -462,6 +684,28 @@
                 <div class="status ready" id="status">
                     Draw a rectangle on the map to select area
                 </div>
+                
+                <button class="btn btn-clear" id="clearBtn" onclick="clearSelection()" style="display:none;">
+                    🗑️ Clear Selection
+                </button>
+            </div>
+        </div>
+        
+        <div class="preview-panel" id="previewPanel">
+            <div class="preview-header">
+                <h3>📺 Preview - How it will look on device</h3>
+                <button class="preview-close" onclick="closePreview()">✕</button>
+            </div>
+            <div class="preview-canvas-container">
+                <canvas id="previewCanvas"></canvas>
+            </div>
+            <div class="preview-legend">
+                <div class="legend-item"><span class="legend-color" style="background:#ff6b6b"></span> Highways</div>
+                <div class="legend-item"><span class="legend-color" style="background:#ffd93d"></span> Major Roads</div>
+                <div class="legend-item"><span class="legend-color" style="background:#ffffff"></span> Minor Roads</div>
+                <div class="legend-item"><span class="legend-color" style="background:#4dabf7"></span> Water</div>
+                <div class="legend-item"><span class="legend-color" style="background:#69db7c"></span> Parks/Land</div>
+                <div class="legend-item"><span class="legend-color" style="background:#da77f2"></span> Railways</div>
             </div>
         </div>
         
@@ -495,7 +739,7 @@
         const drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
         
-        // Draw control
+        // Draw control - rectangle and polygon (click-to-place vertices)
         const drawControl = new L.Control.Draw({
             draw: {
                 rectangle: {
@@ -504,42 +748,87 @@
                         fillOpacity: 0.2
                     }
                 },
-                polygon: false,
+                polygon: {
+                    allowIntersection: false,
+                    shapeOptions: {
+                        color: '#4cc9f0',
+                        fillOpacity: 0.2
+                    },
+                    showArea: true,
+                    metric: true
+                },
                 circle: false,
                 circlemarker: false,
                 marker: false,
                 polyline: false
             },
-            edit: {
-                featureGroup: drawnItems,
-                remove: true
-            }
+            edit: false
         });
         map.addControl(drawControl);
         
-        // Current selection bounds
+        // Current selection - can be bounds (rect) or polygon
         let selectedBounds = null;
+        let selectedPolygon = null;
+        
+        // Preview layer for showing selected features
+        let previewLayer = new L.LayerGroup();
+        map.addLayer(previewLayer);
         
         // Handle drawing events
         map.on(L.Draw.Event.CREATED, function(e) {
             drawnItems.clearLayers();
+            previewLayer.clearLayers();
             drawnItems.addLayer(e.layer);
             selectedBounds = e.layer.getBounds();
+            
+            // Store polygon coordinates if it's a polygon
+            if (e.layerType === 'polygon') {
+                selectedPolygon = e.layer.getLatLngs()[0].map(ll => [ll.lat, ll.lng]);
+            } else {
+                selectedPolygon = null;
+            }
+            
             updateStats();
             document.getElementById('generateBtn').disabled = false;
-            setStatus('ready', 'Ready to generate map');
+            document.getElementById('previewBtn').disabled = false;
+            document.getElementById('clearBtn').style.display = 'block';
+            setStatus('ready', 'Ready to preview or generate');
         });
         
         map.on(L.Draw.Event.DELETED, function(e) {
             selectedBounds = null;
+            selectedPolygon = null;
+            previewLayer.clearLayers();
             document.getElementById('generateBtn').disabled = true;
-            setStatus('ready', 'Draw a rectangle on the map to select area');
+            document.getElementById('previewBtn').disabled = true;
+            document.getElementById('clearBtn').style.display = 'none';
+            setStatus('ready', 'Draw a shape on the map to select area');
             clearStats();
         });
         
         // =============================================================================
         // UI FUNCTIONS
         // =============================================================================
+        
+        function toggleSection(titleEl) {
+            titleEl.classList.toggle('collapsed');
+            const content = titleEl.nextElementSibling;
+            if (content && content.classList.contains('section-content')) {
+                content.classList.toggle('collapsed');
+            }
+        }
+        
+        function clearSelection() {
+            drawnItems.clearLayers();
+            previewLayer.clearLayers();
+            selectedBounds = null;
+            selectedPolygon = null;
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('previewBtn').disabled = true;
+            document.getElementById('clearBtn').style.display = 'none';
+            setStatus('ready', 'Draw a shape on the map to select area');
+            clearStats();
+        }
         
         function useMyLocation() {
             if (!navigator.geolocation) {
@@ -549,6 +838,12 @@
             
             setStatus('working', 'Getting location...');
             
+            const options = {
+                enableHighAccuracy: false,  // false is faster and works better on desktop
+                timeout: 10000,             // 10 second timeout
+                maximumAge: 300000          // Accept cached position up to 5 min old
+            };
+            
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const lat = position.coords.latitude;
@@ -557,8 +852,17 @@
                     setStatus('ready', 'Centered on your location');
                 },
                 (error) => {
-                    setStatus('error', 'Could not get location: ' + error.message);
-                }
+                    let msg = 'Could not get location';
+                    if (error.code === 1) {
+                        msg = 'Location access denied. Check browser settings.';
+                    } else if (error.code === 2) {
+                        msg = 'Location unavailable. Try again.';
+                    } else if (error.code === 3) {
+                        msg = 'Location request timed out. Try again.';
+                    }
+                    setStatus('error', msg);
+                },
+                options
             );
         }
         
@@ -622,22 +926,73 @@
         }
         
         function estimateSize(areaKm2) {
-            let bytesPerKm2 = 0;
-            if (document.getElementById('highways').checked) bytesPerKm2 += 5000;
-            if (document.getElementById('majorRoads').checked) bytesPerKm2 += 12000;
-            if (document.getElementById('minorRoads').checked) bytesPerKm2 += 35000;
-            if (document.getElementById('paths').checked) bytesPerKm2 += 15000;
-            if (document.getElementById('water').checked) bytesPerKm2 += 8000;
-            if (document.getElementById('parks').checked) bytesPerKm2 += 5000;
-            if (document.getElementById('railways').checked) bytesPerKm2 += 3000;
-            if (document.getElementById('buildings').checked) bytesPerKm2 += 80000;
-            
-            // Adjust for detail level (simplification)
             const detailLevel = parseInt(document.getElementById('detailLevel').value);
+            const maxPoints = parseInt(document.getElementById('maxPoints').value);
             const detailMultiplier = [0.4, 0.6, 1.0, 1.5, 2.0][detailLevel - 1];
-            bytesPerKm2 *= detailMultiplier;
             
-            return Math.round(areaKm2 * bytesPerKm2 / 1024);
+            // Size estimates per km² for each feature type (base values, avgPoints)
+            const estimates = [
+                // Highways
+                { id: 'motorways', name: 'Motorways', base: 2000, avgPts: 35 },
+                { id: 'trunkRoads', name: 'Trunk Roads', base: 3000, avgPts: 30 },
+                // Roads
+                { id: 'primaryRoads', name: 'Primary Roads', base: 5000, avgPts: 25 },
+                { id: 'secondaryRoads', name: 'Secondary Roads', base: 8000, avgPts: 20 },
+                { id: 'tertiaryRoads', name: 'Tertiary Roads', base: 12000, avgPts: 15 },
+                { id: 'residentialRoads', name: 'Residential', base: 25000, avgPts: 10 },
+                { id: 'serviceRoads', name: 'Service Roads', base: 15000, avgPts: 8 },
+                // Paths
+                { id: 'footways', name: 'Footways', base: 10000, avgPts: 10 },
+                { id: 'cycleways', name: 'Cycleways', base: 5000, avgPts: 15 },
+                { id: 'tracks', name: 'Tracks', base: 8000, avgPts: 12 },
+                // Water
+                { id: 'waterBodies', name: 'Lakes/Ponds', base: 5000, avgPts: 25 },
+                { id: 'waterways', name: 'Rivers', base: 4000, avgPts: 20 },
+                { id: 'coastlines', name: 'Coastlines', base: 6000, avgPts: 30 },
+                // Nature
+                { id: 'parks', name: 'Parks', base: 3000, avgPts: 20 },
+                { id: 'forests', name: 'Forests', base: 4000, avgPts: 25 },
+                { id: 'grassland', name: 'Grassland', base: 3500, avgPts: 20 },
+                // Infrastructure
+                { id: 'railways', name: 'Railways', base: 3000, avgPts: 25 },
+                { id: 'bridges', name: 'Bridges', base: 1500, avgPts: 15 },
+                { id: 'powerlines', name: 'Power Lines', base: 4000, avgPts: 20 },
+                // Land Use
+                { id: 'buildings', name: 'Buildings', base: 80000, avgPts: 8 },
+                { id: 'industrial', name: 'Industrial', base: 2000, avgPts: 15 },
+                { id: 'commercial', name: 'Commercial', base: 2500, avgPts: 15 },
+                { id: 'residential', name: 'Residential Areas', base: 3000, avgPts: 15 }
+            ];
+            
+            let totalBytes = 0;
+            let breakdownHtml = '';
+            
+            for (const est of estimates) {
+                const el = document.getElementById(est.id);
+                if (el && el.checked) {
+                    // Scale by points multiplier - features with more points are affected more
+                    const ptsScale = Math.min(1.0, maxPoints / est.avgPts);
+                    const bytes = Math.round(areaKm2 * est.base * detailMultiplier * ptsScale);
+                    const kb = Math.round(bytes / 1024);
+                    totalBytes += bytes;
+                    if (kb > 0) {
+                        const color = kb > 200 ? '#ff6b6b' : kb > 100 ? '#ffd93d' : '#69db7c';
+                        breakdownHtml += '<div style="display:flex;justify-content:space-between;"><span>' + est.name + '</span><span style="color:' + color + '">' + kb + ' KB</span></div>';
+                    }
+                }
+            }
+            
+            // Show breakdown
+            const breakdownDiv = document.getElementById('sizeBreakdown');
+            const contentDiv = document.getElementById('breakdownContent');
+            if (breakdownHtml && areaKm2 > 0) {
+                contentDiv.innerHTML = breakdownHtml;
+                breakdownDiv.style.display = 'block';
+            } else {
+                breakdownDiv.style.display = 'none';
+            }
+            
+            return Math.round(totalBytes / 1024);
         }
         
         function updateSizeWarning(estKB) {
@@ -667,8 +1022,191 @@
         }
         
         function updateBudgetLabel() {
-            const budget = document.getElementById('sizeBudget').value;
-            document.getElementById('budgetValue').textContent = budget + ' KB';
+            const budget = parseInt(document.getElementById('sizeBudget').value);
+            if (budget >= 1000) {
+                document.getElementById('budgetValue').textContent = (budget / 1000).toFixed(1) + ' MB';
+            } else {
+                document.getElementById('budgetValue').textContent = budget + ' KB';
+            }
+        }
+        
+        // =============================================================================
+        // API RETRY HELPER
+        // =============================================================================
+        
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            let lastError;
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error('API error: ' + response.status);
+                    }
+                    return response;
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`Attempt ${attempt}/${maxRetries} failed:`, error.message);
+                    if (attempt < maxRetries) {
+                        setStatus('working', `Retry ${attempt}/${maxRetries - 1}... API unresponsive`);
+                        await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
+                    }
+                }
+            }
+            throw lastError;
+        }
+        
+        // =============================================================================
+        // PREVIEW FUNCTION
+        // =============================================================================
+        
+        // Colors for preview matching the device viewer
+        const PREVIEW_COLORS = {
+            highway: { color: '#ff6b6b', weight: 4 },      // Motorways, trunk
+            major: { color: '#ffd93d', weight: 3 },        // Primary, secondary
+            minor: { color: '#ffffff', weight: 2 },        // Tertiary, residential
+            path: { color: '#aaaaaa', weight: 1, dashArray: '4,4' },  // Footways, etc.
+            water: { color: '#4dabf7', weight: 2 },
+            park: { color: '#69db7c', weight: 2 },
+            railway: { color: '#da77f2', weight: 2, dashArray: '8,4' },
+            building: { color: '#868e96', weight: 1, fillColor: '#495057', fillOpacity: 0.5 }
+        };
+        
+        function closePreview() {
+            document.getElementById('previewPanel').classList.remove('active');
+        }
+        
+        async function previewMap() {
+            if (!selectedBounds) {
+                setStatus('error', 'Please select an area first');
+                return;
+            }
+            
+            const btn = document.getElementById('previewBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Loading...';
+            setStatus('working', 'Fetching preview from OpenStreetMap...');
+            
+            try {
+                const query = buildOverpassQuery();
+                const response = await fetchWithRetry('https://overpass-api.de/api/interpreter', {
+                    method: 'POST',
+                    body: query
+                });
+                
+                const data = await response.json();
+                
+                // Render to canvas instead of map overlay
+                const canvas = document.getElementById('previewCanvas');
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = 400;
+                const ctx = canvas.getContext('2d');
+                
+                // Black background
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate bounds for coordinate transformation
+                const bounds = selectedBounds;
+                const minLat = bounds.getSouth();
+                const maxLat = bounds.getNorth();
+                const minLon = bounds.getWest();
+                const maxLon = bounds.getEast();
+                
+                // Padding
+                const padding = 20;
+                const drawWidth = canvas.width - padding * 2;
+                const drawHeight = canvas.height - padding * 2;
+                
+                // Scale to fit while maintaining aspect ratio
+                const latRange = maxLat - minLat;
+                const lonRange = maxLon - minLon;
+                const latScale = drawHeight / latRange;
+                const lonScale = drawWidth / lonRange;
+                const scale = Math.min(latScale, lonScale);
+                
+                // Center offset
+                const offsetX = padding + (drawWidth - lonRange * scale) / 2;
+                const offsetY = padding + (drawHeight - latRange * scale) / 2;
+                
+                function toCanvasX(lon) {
+                    return offsetX + (lon - minLon) * scale;
+                }
+                function toCanvasY(lat) {
+                    return canvas.height - (offsetY + (lat - minLat) * scale);
+                }
+                
+                // Draw features
+                let featureCount = 0;
+                for (const element of data.elements) {
+                    if (element.type !== 'way' || !element.geometry) continue;
+                    
+                    const coords = element.geometry;
+                    if (coords.length < 2) continue;
+                    
+                    const style = getPreviewStyle(element.tags);
+                    if (!style) continue;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(toCanvasX(coords[0].lon), toCanvasY(coords[0].lat));
+                    for (let i = 1; i < coords.length; i++) {
+                        ctx.lineTo(toCanvasX(coords[i].lon), toCanvasY(coords[i].lat));
+                    }
+                    ctx.strokeStyle = style.color;
+                    ctx.lineWidth = style.weight || 1;
+                    if (style.dashArray) {
+                        ctx.setLineDash(style.dashArray.split(',').map(Number));
+                    } else {
+                        ctx.setLineDash([]);
+                    }
+                    ctx.stroke();
+                    featureCount++;
+                }
+                
+                // Draw border
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([]);
+                ctx.strokeRect(padding, padding, drawWidth, drawHeight);
+                
+                // Show preview panel
+                document.getElementById('previewPanel').classList.add('active');
+                
+                document.getElementById('featureCount').textContent = featureCount;
+                setStatus('ready', 'Preview: ' + featureCount + ' features. Adjust settings and regenerate, or generate file.');
+                
+            } catch (error) {
+                setStatus('error', 'Preview error: ' + error.message);
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '👁️ Preview Selection';
+            }
+        }
+        
+        function getPreviewStyle(tags) {
+            if (!tags) return null;
+            
+            if (tags.highway) {
+                if (['motorway', 'motorway_link', 'trunk', 'trunk_link'].includes(tags.highway)) {
+                    return PREVIEW_COLORS.highway;
+                }
+                if (['primary', 'secondary', 'primary_link', 'secondary_link'].includes(tags.highway)) {
+                    return PREVIEW_COLORS.major;
+                }
+                if (['tertiary', 'tertiary_link', 'residential', 'unclassified', 'service', 'living_street'].includes(tags.highway)) {
+                    return PREVIEW_COLORS.minor;
+                }
+                if (['footway', 'path', 'cycleway', 'track', 'pedestrian', 'steps', 'bridleway'].includes(tags.highway)) {
+                    return PREVIEW_COLORS.path;
+                }
+            }
+            if (tags.railway) return PREVIEW_COLORS.railway;
+            if (tags.natural === 'water' || tags.waterway) return PREVIEW_COLORS.water;
+            if (tags.leisure === 'park' || tags.landuse) return PREVIEW_COLORS.park;
+            if (tags.building) return PREVIEW_COLORS.building;
+            
+            return null;
         }
         
         // =============================================================================
@@ -712,16 +1250,12 @@
                 debugLog('QUERY', 'Overpass query:', query);
                 setProgress(20);
                 
-                // Fetch data
+                // Fetch data with retry
                 debugLog('FETCH', 'Fetching from Overpass API...');
-                const response = await fetch('https://overpass-api.de/api/interpreter', {
+                const response = await fetchWithRetry('https://overpass-api.de/api/interpreter', {
                     method: 'POST',
                     body: query
                 });
-                
-                if (!response.ok) {
-                    throw new Error('Overpass API error: ' + response.status);
-                }
                 
                 setStatus('working', 'Parsing response...');
                 setProgress(50);
@@ -768,32 +1302,87 @@
             
             let query = `[out:json][bbox:${bbox}];(\n`;
             
-            // Roads
-            if (document.getElementById('highways').checked) {
-                query += `way["highway"~"motorway|motorway_link|trunk|trunk_link"];\n`;
+            // Highways
+            if (document.getElementById('motorways').checked) {
+                query += `way["highway"~"motorway|motorway_link"];\n`;
             }
-            if (document.getElementById('majorRoads').checked) {
-                query += `way["highway"~"primary|secondary|primary_link|secondary_link"];\n`;
-            }
-            if (document.getElementById('minorRoads').checked) {
-                query += `way["highway"~"tertiary|residential|unclassified|service"];\n`;
-            }
-            if (document.getElementById('paths').checked) {
-                query += `way["highway"~"footway|path|cycleway|track|pedestrian"];\n`;
+            if (document.getElementById('trunkRoads').checked) {
+                query += `way["highway"~"trunk|trunk_link"];\n`;
             }
             
-            // Features
-            if (document.getElementById('water').checked) {
-                query += `way["natural"="water"];\nway["waterway"~"river|stream|canal"];\n`;
+            // Roads
+            if (document.getElementById('primaryRoads').checked) {
+                query += `way["highway"~"primary|primary_link"];\n`;
             }
+            if (document.getElementById('secondaryRoads').checked) {
+                query += `way["highway"~"secondary|secondary_link"];\n`;
+            }
+            if (document.getElementById('tertiaryRoads').checked) {
+                query += `way["highway"~"tertiary|tertiary_link"];\n`;
+            }
+            if (document.getElementById('residentialRoads').checked) {
+                query += `way["highway"~"residential|unclassified"];\n`;
+            }
+            if (document.getElementById('serviceRoads').checked) {
+                query += `way["highway"="service"];\n`;
+            }
+            
+            // Paths
+            if (document.getElementById('footways').checked) {
+                query += `way["highway"~"footway|pedestrian|steps"];\n`;
+            }
+            if (document.getElementById('cycleways').checked) {
+                query += `way["highway"="cycleway"];\n`;
+            }
+            if (document.getElementById('tracks').checked) {
+                query += `way["highway"~"track|path"];\n`;
+            }
+            
+            // Water
+            if (document.getElementById('waterBodies').checked) {
+                query += `way["natural"="water"];\n`;
+            }
+            if (document.getElementById('waterways').checked) {
+                query += `way["waterway"~"river|stream|canal"];\n`;
+            }
+            if (document.getElementById('coastlines').checked) {
+                query += `way["natural"="coastline"];\n`;
+            }
+            
+            // Nature
             if (document.getElementById('parks').checked) {
-                query += `way["leisure"="park"];\nway["landuse"~"grass|forest|meadow"];\n`;
+                query += `way["leisure"="park"];\nway["landuse"="grass"];\n`;
             }
+            if (document.getElementById('forests').checked) {
+                query += `way["landuse"~"forest|wood"];\nway["natural"="wood"];\n`;
+            }
+            if (document.getElementById('grassland').checked) {
+                query += `way["landuse"~"meadow|grassland"];\nway["natural"~"grassland|heath"];\n`;
+            }
+            
+            // Infrastructure
             if (document.getElementById('railways').checked) {
                 query += `way["railway"~"rail|light_rail|subway|tram"];\n`;
             }
+            if (document.getElementById('bridges').checked) {
+                query += `way["bridge"="yes"];\n`;
+            }
+            if (document.getElementById('powerlines').checked) {
+                query += `way["power"~"line|minor_line"];\n`;
+            }
+            
+            // Land Use
             if (document.getElementById('buildings').checked) {
                 query += `way["building"];\n`;
+            }
+            if (document.getElementById('industrial').checked) {
+                query += `way["landuse"="industrial"];\n`;
+            }
+            if (document.getElementById('commercial').checked) {
+                query += `way["landuse"~"commercial|retail"];\n`;
+            }
+            if (document.getElementById('residential').checked) {
+                query += `way["landuse"="residential"];\n`;
             }
             
             query += `);out geom;`;
@@ -827,14 +1416,33 @@
             // Process features
             const features = [];
             const detailLevel = parseInt(document.getElementById('detailLevel').value);
-            const tolerances = [0.0005, 0.0003, 0.0001, 0.00005, 0.00002];
+            const maxPointsPerFeature = parseInt(document.getElementById('maxPoints').value);
+            const autoFitBudget = document.getElementById('autoFitBudget').checked;
+            const budgetBytes = parseInt(document.getElementById('sizeBudget').value) * 1024;
+            
+            // More aggressive tolerances for smaller files
+            const tolerances = [0.001, 0.0005, 0.0002, 0.0001, 0.00005];
             const tolerance = tolerances[detailLevel - 1];
             
             debugLog('CONVERT', 'Detail level:', detailLevel, 'Tolerance:', tolerance);
+            debugLog('CONVERT', 'Max points per feature:', maxPointsPerFeature);
+            debugLog('CONVERT', 'Auto-fit budget:', autoFitBudget, 'Budget:', budgetBytes, 'bytes');
             
             let skippedNoGeom = 0;
             let skippedNoType = 0;
             let skippedTooShort = 0;
+            
+            // Feature priority (lower = more important, keep first)
+            const typePriority = {
+                0x00: 1,  // Highway - most important
+                0x01: 2,  // Major road
+                0x10: 3,  // Water (landmarks)
+                0x20: 4,  // Railway
+                0x02: 5,  // Minor road
+                0x11: 6,  // Park
+                0x03: 7,  // Path - least important road
+                0x30: 8   // Building - least important
+            };
             
             for (const element of osmData.elements) {
                 if (element.type !== 'way' || !element.geometry) {
@@ -855,42 +1463,71 @@
                     continue;
                 }
                 
-                // Split features with more than 255 points (uint8 limit)
-                while (points.length > 0) {
-                    const chunk = points.slice(0, 255);
-                    if (chunk.length >= 2) {
-                        features.push({
-                            type: featureType,
-                            points: chunk
-                        });
-                    }
-                    if (points.length <= 255) break;
-                    // Keep last point as first of next chunk for continuity
-                    points = points.slice(254);
+                // Limit points per feature
+                if (points.length > maxPointsPerFeature) {
+                    points = resamplePoints(points, maxPointsPerFeature);
                 }
+                
+                // Calculate feature length for priority sorting
+                let length = 0;
+                for (let i = 1; i < points.length; i++) {
+                    const dx = points[i].lon - points[i-1].lon;
+                    const dy = points[i].lat - points[i-1].lat;
+                    length += Math.sqrt(dx*dx + dy*dy);
+                }
+                
+                features.push({
+                    type: featureType,
+                    points: points,
+                    priority: typePriority[featureType] || 99,
+                    length: length
+                });
             }
             
             debugLog('CONVERT', 'Skipped - no geometry:', skippedNoGeom);
             debugLog('CONVERT', 'Skipped - no type match:', skippedNoType);
             debugLog('CONVERT', 'Skipped - too short:', skippedTooShort);
-            debugLog('CONVERT', 'Final feature count:', features.length);
+            debugLog('CONVERT', 'Features before trimming:', features.length);
+            
+            // Sort by priority (important first), then by length (longer = more important)
+            features.sort((a, b) => {
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                return b.length - a.length; // Longer roads first within same priority
+            });
+            
+            // Auto-fit to budget by dropping least important features
+            let trimmedFeatures = features;
+            if (autoFitBudget) {
+                let currentSize = 36; // Header
+                trimmedFeatures = [];
+                for (const f of features) {
+                    const featureSize = 2 + 8 + (f.points.length - 1) * 4;
+                    if (currentSize + featureSize <= budgetBytes) {
+                        trimmedFeatures.push(f);
+                        currentSize += featureSize;
+                    }
+                }
+                debugLog('CONVERT', 'Trimmed to budget:', trimmedFeatures.length, 'features,', currentSize, 'bytes');
+            }
+            
+            debugLog('CONVERT', 'Final feature count:', trimmedFeatures.length);
             
             // Log point distribution
             let totalPoints = 0;
-            let maxPoints = 0;
-            for (const f of features) {
+            let maxPts = 0;
+            for (const f of trimmedFeatures) {
                 totalPoints += f.points.length;
-                if (f.points.length > maxPoints) maxPoints = f.points.length;
+                if (f.points.length > maxPts) maxPts = f.points.length;
             }
-            debugLog('CONVERT', 'Total points:', totalPoints, 'Max points per feature:', maxPoints);
+            debugLog('CONVERT', 'Total points:', totalPoints, 'Max points per feature:', maxPts);
             
             // Update feature count display
-            document.getElementById('featureCount').textContent = features.length;
+            document.getElementById('featureCount').textContent = trimmedFeatures.length;
             
             // Calculate buffer size
             // Header: 4 (magic) + 2 (version) + 2 (flags) + 16 (bounds) + 4 (count) + 8 (name) = 36
             let bufferSize = 36; // Header
-            for (const f of features) {
+            for (const f of trimmedFeatures) {
                 bufferSize += 2 + 8 + (f.points.length - 1) * 4; // type + count + first point + deltas
             }
             
@@ -927,7 +1564,7 @@
             offset += 4;
             
             // Feature count
-            view.setUint32(offset, features.length, true);
+            view.setUint32(offset, trimmedFeatures.length, true);
             offset += 4;
             
             // Region name (null-padded to 8 bytes)
@@ -939,7 +1576,7 @@
             
             // Write features
             let featureIdx = 0;
-            for (const feature of features) {
+            for (const feature of trimmedFeatures) {
                 const featureStartOffset = offset;
                 const expectedSize = 2 + 8 + (feature.points.length - 1) * 4;
                 
@@ -1003,25 +1640,29 @@
         function classifyFeature(tags) {
             if (!tags) return null;
             
-            // Roads
+            // Roads - check highway tag
             if (tags.highway) {
+                // Highways (motorways, trunk roads)
                 if (['motorway', 'motorway_link', 'trunk', 'trunk_link'].includes(tags.highway)) {
                     return FEATURE_TYPES.ROAD_HIGHWAY;
                 }
+                // Major roads (primary, secondary)
                 if (['primary', 'secondary', 'primary_link', 'secondary_link'].includes(tags.highway)) {
                     return FEATURE_TYPES.ROAD_MAJOR;
                 }
-                if (['tertiary', 'residential', 'unclassified', 'service'].includes(tags.highway)) {
+                // Minor roads (tertiary, residential, service, unclassified)
+                if (['tertiary', 'tertiary_link', 'residential', 'unclassified', 'service', 'living_street'].includes(tags.highway)) {
                     return FEATURE_TYPES.ROAD_MINOR;
                 }
-                if (['footway', 'path', 'cycleway', 'track', 'pedestrian'].includes(tags.highway)) {
+                // Paths (footways, cycleways, tracks, etc.)
+                if (['footway', 'path', 'cycleway', 'track', 'pedestrian', 'steps', 'bridleway'].includes(tags.highway)) {
                     return FEATURE_TYPES.ROAD_PATH;
                 }
             }
             
             // Railways
             if (tags.railway) {
-                if (['rail', 'light_rail', 'subway', 'tram'].includes(tags.railway)) {
+                if (['rail', 'light_rail', 'subway', 'tram', 'narrow_gauge'].includes(tags.railway)) {
                     return FEATURE_TYPES.RAILWAY;
                 }
             }
@@ -1032,7 +1673,7 @@
             }
             
             // Parks and green areas
-            if (tags.leisure === 'park' || ['grass', 'forest', 'meadow'].includes(tags.landuse)) {
+            if (tags.leisure === 'park' || ['grass', 'forest', 'meadow', 'wood'].includes(tags.landuse) || tags.natural === 'wood') {
                 return FEATURE_TYPES.PARK;
             }
             
@@ -1050,6 +1691,23 @@
             
             const points = geometry.map(p => ({ lat: p.lat, lon: p.lon }));
             return douglasPeucker(points, tolerance);
+        }
+        
+        // Resample points to a maximum count while preserving start/end
+        function resamplePoints(points, maxCount) {
+            if (points.length <= maxCount) return points;
+            
+            // Always keep first and last point
+            const result = [points[0]];
+            const step = (points.length - 1) / (maxCount - 1);
+            
+            for (let i = 1; i < maxCount - 1; i++) {
+                const idx = Math.round(i * step);
+                result.push(points[idx]);
+            }
+            
+            result.push(points[points.length - 1]);
+            return result;
         }
         
         function douglasPeucker(points, tolerance) {
@@ -1116,6 +1774,11 @@
         
         document.getElementById('sizeBudget').addEventListener('input', () => {
             updateBudgetLabel();
+            updateStats();
+        });
+        
+        document.getElementById('maxPoints').addEventListener('input', () => {
+            document.getElementById('maxPointsValue').textContent = document.getElementById('maxPoints').value + ' pts';
             updateStats();
         });
     </script>
