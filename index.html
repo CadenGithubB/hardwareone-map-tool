@@ -54,6 +54,12 @@
             gap: 20px;
         }
         
+        .map-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
         @media (max-width: 900px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -144,10 +150,18 @@
             background: #222;
         }
         
+        .section-count {
+            color: #4cc9f0;
+            font-size: 0.9em;
+            margin-left: auto;
+            margin-right: 8px;
+        }
+        
         .section-title::after {
             content: '▼';
             font-size: 0.7em;
             transition: transform 0.2s;
+            flex-shrink: 0;
         }
         
         .section-title.collapsed::after {
@@ -395,15 +409,65 @@
         }
         
         .preview-panel {
-            margin-top: 20px;
             background: #16213e;
             border-radius: 8px;
             padding: 15px;
             display: none;
+            margin-top: 15px;
         }
         
         .preview-panel.active {
             display: block;
+        }
+        
+        .instructions-banner {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .instructions-banner.hidden {
+            display: none;
+        }
+        
+        .instructions-banner h3 {
+            color: #4cc9f0;
+            font-size: 0.9em;
+            margin: 0 0 6px 0;
+        }
+        
+        .instructions-banner ol {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 0.8em;
+            color: #aaa;
+            line-height: 1.5;
+        }
+        
+        .instructions-banner ol li {
+            margin-bottom: 2px;
+        }
+        
+        .instructions-content {
+            flex: 1;
+        }
+        
+        .instructions-close {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        
+        .instructions-close:hover {
+            color: #fff;
         }
         
         .preview-header {
@@ -472,9 +536,38 @@
             <p>Create offline map files for your ESP32 device</p>
         </header>
         
+        <div class="instructions-banner" id="instructionsBanner">
+            <div class="instructions-content">
+                <h3>How to Use</h3>
+                <ol>
+                    <li>Draw a rectangle on the map to select your area</li>
+                    <li>Adjust features and settings in the sidebar</li>
+                    <li>Click "Preview" to see what will be included, then "Generate" to download</li>
+                </ol>
+            </div>
+            <button class="instructions-close" onclick="document.getElementById('instructionsBanner').classList.add('hidden')">✕</button>
+        </div>
+        
         <div class="main-content">
-            <div class="map-container">
+            <div class="map-row">
                 <div id="map"></div>
+                <div class="preview-panel" id="previewPanel">
+                    <div class="preview-header">
+                        <h3>📺 Preview - How it will look on device</h3>
+                        <button class="preview-close" onclick="closePreview()">✕</button>
+                    </div>
+                    <div class="preview-canvas-container">
+                        <canvas id="previewCanvas"></canvas>
+                    </div>
+                    <div class="preview-legend">
+                        <div class="legend-item"><span class="legend-color" style="background:#ff6b6b"></span> Highways</div>
+                        <div class="legend-item"><span class="legend-color" style="background:#ffd93d"></span> Major Roads</div>
+                        <div class="legend-item"><span class="legend-color" style="background:#ffffff"></span> Minor Roads</div>
+                        <div class="legend-item"><span class="legend-color" style="background:#4dabf7"></span> Water</div>
+                        <div class="legend-item"><span class="legend-color" style="background:#69db7c"></span> Parks/Land</div>
+                        <div class="legend-item"><span class="legend-color" style="background:#da77f2"></span> Railways</div>
+                    </div>
+                </div>
             </div>
             
             <div class="sidebar">
@@ -492,122 +585,122 @@
                 <div class="form-group">
                     <label>Include Features</label>
                     
-                    <div class="section-title" onclick="toggleSection(this)">Highways</div>
+                    <div class="section-title" onclick="toggleSection(this)" data-section="highways">Highways <span class="section-count" id="countHighways">(2/2)</span></div>
                     <div class="section-content">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="motorways" checked>
+                            <input type="checkbox" id="motorways" checked onchange="updateSectionCounts()">
                             Motorways
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="trunkRoads" checked>
+                            <input type="checkbox" id="trunkRoads" checked onchange="updateSectionCounts()">
                             Trunk/US Routes
                         </label>
                     </div>
                     
-                    <div class="section-title" onclick="toggleSection(this)">Roads</div>
+                    <div class="section-title" onclick="toggleSection(this)" data-section="roads">Roads <span class="section-count" id="countRoads">(2/5)</span></div>
                     <div class="section-content">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="primaryRoads" checked>
+                            <input type="checkbox" id="primaryRoads" checked onchange="updateSectionCounts()">
                             Primary
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="secondaryRoads" checked>
+                            <input type="checkbox" id="secondaryRoads" checked onchange="updateSectionCounts()">
                             Secondary
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="tertiaryRoads">
+                            <input type="checkbox" id="tertiaryRoads" onchange="updateSectionCounts()">
                             Tertiary
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="residentialRoads">
+                            <input type="checkbox" id="residentialRoads" onchange="updateSectionCounts()">
                             Residential
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="serviceRoads">
+                            <input type="checkbox" id="serviceRoads" onchange="updateSectionCounts()">
                             Service
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)">Paths</div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="paths">Paths <span class="section-count" id="countPaths">(0/3)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="footways">
+                            <input type="checkbox" id="footways" onchange="updateSectionCounts()">
                             Footways
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="cycleways">
+                            <input type="checkbox" id="cycleways" onchange="updateSectionCounts()">
                             Bike Paths
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="tracks">
+                            <input type="checkbox" id="tracks" onchange="updateSectionCounts()">
                             Trails
                         </label>
                     </div>
                     
-                    <div class="section-title" onclick="toggleSection(this)">Water</div>
+                    <div class="section-title" onclick="toggleSection(this)" data-section="water">Water <span class="section-count" id="countWater">(1/3)</span></div>
                     <div class="section-content">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="waterBodies" checked>
+                            <input type="checkbox" id="waterBodies" checked onchange="updateSectionCounts()">
                             Lakes/Ponds
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="waterways">
+                            <input type="checkbox" id="waterways" onchange="updateSectionCounts()">
                             Rivers
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="coastlines">
+                            <input type="checkbox" id="coastlines" onchange="updateSectionCounts()">
                             Coastlines
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)">Nature</div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="nature">Nature <span class="section-count" id="countNature">(0/3)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="parks">
+                            <input type="checkbox" id="parks" onchange="updateSectionCounts()">
                             Parks
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="forests">
+                            <input type="checkbox" id="forests" onchange="updateSectionCounts()">
                             Forests
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="grassland">
+                            <input type="checkbox" id="grassland" onchange="updateSectionCounts()">
                             Grassland
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)">Infrastructure</div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="infrastructure">Infrastructure <span class="section-count" id="countInfrastructure">(0/3)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="railways">
+                            <input type="checkbox" id="railways" onchange="updateSectionCounts()">
                             Railways
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="bridges">
+                            <input type="checkbox" id="bridges" onchange="updateSectionCounts()">
                             Bridges
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="powerlines">
+                            <input type="checkbox" id="powerlines" onchange="updateSectionCounts()">
                             Power Lines
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)">Land Use</div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="landuse">Land Use <span class="section-count" id="countLanduse">(0/4)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="buildings">
+                            <input type="checkbox" id="buildings" onchange="updateSectionCounts()">
                             Buildings
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="industrial">
+                            <input type="checkbox" id="industrial" onchange="updateSectionCounts()">
                             Industrial
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="commercial">
+                            <input type="checkbox" id="commercial" onchange="updateSectionCounts()">
                             Commercial
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" id="residential">
+                            <input type="checkbox" id="residential" onchange="updateSectionCounts()">
                             Residential
                         </label>
                     </div>
@@ -691,33 +784,6 @@
             </div>
         </div>
         
-        <div class="preview-panel" id="previewPanel">
-            <div class="preview-header">
-                <h3>📺 Preview - How it will look on device</h3>
-                <button class="preview-close" onclick="closePreview()">✕</button>
-            </div>
-            <div class="preview-canvas-container">
-                <canvas id="previewCanvas"></canvas>
-            </div>
-            <div class="preview-legend">
-                <div class="legend-item"><span class="legend-color" style="background:#ff6b6b"></span> Highways</div>
-                <div class="legend-item"><span class="legend-color" style="background:#ffd93d"></span> Major Roads</div>
-                <div class="legend-item"><span class="legend-color" style="background:#ffffff"></span> Minor Roads</div>
-                <div class="legend-item"><span class="legend-color" style="background:#4dabf7"></span> Water</div>
-                <div class="legend-item"><span class="legend-color" style="background:#69db7c"></span> Parks/Land</div>
-                <div class="legend-item"><span class="legend-color" style="background:#da77f2"></span> Railways</div>
-            </div>
-        </div>
-        
-        <div class="instructions">
-            <h3>How to Use</h3>
-            <ol>
-                <li>Click the rectangle tool on the map (top-left) and draw your desired area</li>
-                <li>Adjust the region name and feature options</li>
-                <li>Click "Generate Map File" to create the .hwmap file</li>
-                <li>Upload the file to your device via the web file manager at <code>/maps/</code></li>
-            </ol>
-        </div>
     </div>
     
     <!-- Leaflet JS -->
@@ -815,6 +881,32 @@
             const content = titleEl.nextElementSibling;
             if (content && content.classList.contains('section-content')) {
                 content.classList.toggle('collapsed');
+            }
+        }
+        
+        function updateSectionCounts() {
+            const sections = {
+                highways: ['motorways', 'trunkRoads'],
+                roads: ['primaryRoads', 'secondaryRoads', 'tertiaryRoads', 'residentialRoads', 'serviceRoads'],
+                paths: ['footways', 'cycleways', 'tracks'],
+                water: ['waterBodies', 'waterways', 'coastlines'],
+                nature: ['parks', 'forests', 'grassland'],
+                infrastructure: ['railways', 'bridges', 'powerlines'],
+                landuse: ['buildings', 'industrial', 'commercial', 'residential']
+            };
+            
+            for (const [section, ids] of Object.entries(sections)) {
+                const checked = ids.filter(id => document.getElementById(id)?.checked).length;
+                const total = ids.length;
+                const el = document.getElementById('count' + section.charAt(0).toUpperCase() + section.slice(1));
+                if (el) {
+                    el.textContent = `(${checked}/${total})`;
+                }
+            }
+            
+            // Also update stats when checkboxes change
+            if (selectedBounds) {
+                updateStats();
             }
         }
         
