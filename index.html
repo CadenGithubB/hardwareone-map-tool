@@ -495,11 +495,27 @@
             color: #fff;
         }
         
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            background: #16213e;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+        
         .preview-canvas-container {
             background: #000;
             border-radius: 4px;
             overflow: hidden;
             position: relative;
+            cursor: grab;
+        }
+        
+        .preview-canvas-container:active {
+            cursor: grabbing;
         }
         
         #previewCanvas {
@@ -508,12 +524,33 @@
             height: 400px;
         }
         
-        .preview-legend {
+        .preview-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            font-size: 0.8em;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .preview-control-btn {
+            width: 32px;
+            height: 32px;
+            background: rgba(22, 33, 62, 0.9);
+            border: 1px solid #4cc9f0;
+            border-radius: 4px;
+            color: #4cc9f0;
+            font-size: 1.2em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .preview-control-btn:hover {
+            background: #4cc9f0;
+            color: #0f1419;
         }
         
         .legend-item {
@@ -551,21 +588,26 @@
         <div class="main-content">
             <div class="map-row">
                 <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-color" style="background:#ff6b6b"></span> Highways</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#ffd93d"></span> Major Roads</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#ffffff"></span> Minor Roads</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#4dabf7"></span> Water</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#69db7c"></span> Parks/Land</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#da77f2"></span> Railways</div>
+                </div>
                 <div class="preview-panel" id="previewPanel">
                     <div class="preview-header">
                         <h3>📺 Preview - How it will look on device</h3>
                         <button class="preview-close" onclick="closePreview()">✕</button>
                     </div>
-                    <div class="preview-canvas-container">
+                    <div class="preview-canvas-container" id="previewContainer">
                         <canvas id="previewCanvas"></canvas>
-                    </div>
-                    <div class="preview-legend">
-                        <div class="legend-item"><span class="legend-color" style="background:#ff6b6b"></span> Highways</div>
-                        <div class="legend-item"><span class="legend-color" style="background:#ffd93d"></span> Major Roads</div>
-                        <div class="legend-item"><span class="legend-color" style="background:#ffffff"></span> Minor Roads</div>
-                        <div class="legend-item"><span class="legend-color" style="background:#4dabf7"></span> Water</div>
-                        <div class="legend-item"><span class="legend-color" style="background:#69db7c"></span> Parks/Land</div>
-                        <div class="legend-item"><span class="legend-color" style="background:#da77f2"></span> Railways</div>
+                        <div class="preview-controls">
+                            <button class="preview-control-btn" onclick="zoomPreview(1.2)" title="Zoom in">+</button>
+                            <button class="preview-control-btn" onclick="zoomPreview(0.8)" title="Zoom out">−</button>
+                            <button class="preview-control-btn" onclick="resetPreviewZoom()" title="Reset view">⟲</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -685,11 +727,15 @@
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="landuse">Land Use <span class="section-count" id="countLanduse">(0/4)</span></div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="landuse">Land Use <span class="section-count" id="countLanduse">(0/5)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
                             <input type="checkbox" id="buildings" onchange="updateSectionCounts()">
                             Buildings
+                        </label>
+                        <label class="checkbox-item" style="grid-column: span 2; font-size: 0.85em; padding-left: 20px;">
+                            <input type="checkbox" id="buildingsLargeOnly" onchange="updateSectionCounts()">
+                            Large only (3+ floors or 200m²+)
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="industrial" onchange="updateSectionCounts()">
@@ -762,9 +808,15 @@
                     <div id="breakdownContent"></div>
                 </div>
                 
-                <button class="btn btn-secondary" id="previewBtn" onclick="previewMap()" disabled style="margin-bottom:8px;">
-                    👁️ Preview Selection
-                </button>
+                <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+                    <button class="btn btn-secondary" id="previewBtn" onclick="previewMap()" disabled style="flex:1;margin-bottom:0;">
+                        👁️ Preview
+                    </button>
+                    <label class="checkbox-item" style="font-size:0.8em;white-space:nowrap;" title="Auto-refresh preview when settings change">
+                        <input type="checkbox" id="autoPreview" onchange="handleAutoPreviewToggle()">
+                        Auto
+                    </label>
+                </div>
                 
                 <button class="btn btn-primary" id="generateBtn" onclick="generateMap()" disabled>
                     🗺️ Generate Map File
@@ -884,6 +936,28 @@
             }
         }
         
+        let autoPreviewTimeout = null;
+        let autoPreviewEnabled = false;
+        
+        function handleAutoPreviewToggle() {
+            autoPreviewEnabled = document.getElementById('autoPreview').checked;
+            if (autoPreviewEnabled && selectedBounds) {
+                triggerAutoPreview();
+            }
+        }
+        
+        function triggerAutoPreview() {
+            if (!autoPreviewEnabled || !selectedBounds) return;
+            
+            // Debounce - wait 500ms after last change before refreshing
+            if (autoPreviewTimeout) {
+                clearTimeout(autoPreviewTimeout);
+            }
+            autoPreviewTimeout = setTimeout(() => {
+                previewMap();
+            }, 500);
+        }
+        
         function updateSectionCounts() {
             const sections = {
                 highways: ['motorways', 'trunkRoads'],
@@ -892,7 +966,7 @@
                 water: ['waterBodies', 'waterways', 'coastlines'],
                 nature: ['parks', 'forests', 'grassland'],
                 infrastructure: ['railways', 'bridges', 'powerlines'],
-                landuse: ['buildings', 'industrial', 'commercial', 'residential']
+                landuse: ['buildings', 'buildingsLargeOnly', 'industrial', 'commercial', 'residential']
             };
             
             for (const [section, ids] of Object.entries(sections)) {
@@ -908,6 +982,9 @@
             if (selectedBounds) {
                 updateStats();
             }
+            
+            // Trigger auto-preview if enabled
+            triggerAutoPreview();
         }
         
         function clearSelection() {
@@ -991,7 +1068,11 @@
             // Estimate size
             const areaKm2 = widthKm * heightKm;
             const estKB = estimateSize(areaKm2);
-            document.getElementById('estSize').textContent = estKB + ' KB';
+            if (estKB >= 1024) {
+                document.getElementById('estSize').textContent = (estKB / 1024).toFixed(2) + ' MB';
+            } else {
+                document.getElementById('estSize').textContent = estKB + ' KB';
+            }
             
             // Update size warning
             updateSizeWarning(estKB);
@@ -1051,6 +1132,7 @@
                 { id: 'powerlines', name: 'Power Lines', base: 4000, avgPts: 20 },
                 // Land Use
                 { id: 'buildings', name: 'Buildings', base: 80000, avgPts: 8 },
+                { id: 'buildingsLargeOnly', name: 'Buildings (Large)', base: 8000, avgPts: 12 },
                 { id: 'industrial', name: 'Industrial', base: 2000, avgPts: 15 },
                 { id: 'commercial', name: 'Commercial', base: 2500, avgPts: 15 },
                 { id: 'residential', name: 'Residential Areas', base: 3000, avgPts: 15 }
@@ -1126,25 +1208,51 @@
         // API RETRY HELPER
         // =============================================================================
         
-        async function fetchWithRetry(url, options, maxRetries = 3) {
+        // Multiple Overpass API servers for fallback
+        const OVERPASS_SERVERS = [
+            'https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter'
+  
+        ];
+        let currentServerIndex = 0;
+        
+        async function fetchWithRetry(url, options, maxRetries = 2) {
             let lastError;
+            
+            // Try current server first
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
                     const response = await fetch(url, options);
                     if (!response.ok) {
+                        // 429 = rate limit, 504 = timeout
+                        if (response.status === 429 || response.status === 504) {
+                            throw new Error('Server overloaded: ' + response.status);
+                        }
                         throw new Error('API error: ' + response.status);
                     }
                     return response;
                 } catch (error) {
                     lastError = error;
-                    console.warn(`Attempt ${attempt}/${maxRetries} failed:`, error.message);
+                    console.warn(`Attempt ${attempt}/${maxRetries} on server ${currentServerIndex + 1} failed:`, error.message);
                     if (attempt < maxRetries) {
-                        setStatus('working', `Retry ${attempt}/${maxRetries - 1}... API unresponsive`);
-                        await new Promise(r => setTimeout(r, 1000 * attempt)); // Exponential backoff
+                        setStatus('working', `Retry ${attempt}/${maxRetries}... Server busy`);
+                        await new Promise(r => setTimeout(r, 2000 * attempt)); // Longer backoff
                     }
                 }
             }
-            throw lastError;
+            
+            // If all retries failed, try next server
+            if (currentServerIndex < OVERPASS_SERVERS.length - 1) {
+                currentServerIndex++;
+                console.warn(`Switching to backup server ${currentServerIndex + 1}/${OVERPASS_SERVERS.length}`);
+                setStatus('working', `Trying backup server ${currentServerIndex + 1}...`);
+                await new Promise(r => setTimeout(r, 1000)); // Brief pause before switching
+                return fetchWithRetry(OVERPASS_SERVERS[currentServerIndex], options, maxRetries);
+            }
+            
+            // All servers failed
+            currentServerIndex = 0; // Reset for next time
+            throw new Error('All API servers are currently overloaded. Please wait a few minutes and try again.');
         }
         
         // =============================================================================
@@ -1167,6 +1275,144 @@
             document.getElementById('previewPanel').classList.remove('active');
         }
         
+        function renderPreview() {
+            if (!window.previewData || !selectedBounds) return;
+            
+            const canvas = document.getElementById('previewCanvas');
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+            
+            // Black background
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Calculate bounds for coordinate transformation
+            const bounds = selectedBounds;
+            const minLat = bounds.getSouth();
+            const maxLat = bounds.getNorth();
+            const minLon = bounds.getWest();
+            const maxLon = bounds.getEast();
+            
+            // Padding
+            const padding = 20;
+            const drawWidth = canvas.width - padding * 2;
+            const drawHeight = canvas.height - padding * 2;
+            
+            // Scale to fit while maintaining aspect ratio
+            const latRange = maxLat - minLat;
+            const lonRange = maxLon - minLon;
+            const latScale = drawHeight / latRange;
+            const lonScale = drawWidth / lonRange;
+            const baseScale = Math.min(latScale, lonScale);
+            const scale = baseScale * window.previewZoom;
+            
+            // Center offset with pan
+            const offsetX = padding + (drawWidth - lonRange * scale) / 2 + window.previewPanX;
+            const offsetY = padding + (drawHeight - latRange * scale) / 2 + window.previewPanY;
+            
+            function toCanvasX(lon) {
+                return offsetX + (lon - minLon) * scale;
+            }
+            function toCanvasY(lat) {
+                return canvas.height - (offsetY + (lat - minLat) * scale);
+            }
+            
+            // Draw features
+            let featureCount = 0;
+            for (const element of window.previewData.elements) {
+                if (element.type !== 'way' || !element.geometry) continue;
+                
+                const coords = element.geometry;
+                if (coords.length < 2) continue;
+                
+                const style = getPreviewStyle(element.tags);
+                if (!style) continue;
+                
+                ctx.beginPath();
+                ctx.moveTo(toCanvasX(coords[0].lon), toCanvasY(coords[0].lat));
+                for (let i = 1; i < coords.length; i++) {
+                    ctx.lineTo(toCanvasX(coords[i].lon), toCanvasY(coords[i].lat));
+                }
+                ctx.strokeStyle = style.color;
+                ctx.lineWidth = (style.weight || 1) * window.previewZoom;
+                if (style.dashArray) {
+                    ctx.setLineDash(style.dashArray.split(',').map(n => Number(n) * window.previewZoom));
+                } else {
+                    ctx.setLineDash([]);
+                }
+                ctx.stroke();
+                featureCount++;
+            }
+            
+            // Draw border
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([]);
+            ctx.strokeRect(padding, padding, drawWidth, drawHeight);
+            
+            window.previewFeatureCount = featureCount;
+        }
+        
+        function zoomPreview(factor) {
+            if (!window.previewData) return;
+            window.previewZoom *= factor;
+            window.previewZoom = Math.max(0.5, Math.min(5.0, window.previewZoom)); // Limit 0.5x to 5x
+            renderPreview();
+        }
+        
+        function resetPreviewZoom() {
+            if (!window.previewData) return;
+            window.previewZoom = 1.0;
+            window.previewPanX = 0;
+            window.previewPanY = 0;
+            renderPreview();
+        }
+        
+        // Pan support with mouse drag
+        (function setupPreviewPan() {
+            let isDragging = false;
+            let lastX, lastY;
+            
+            const container = document.getElementById('previewContainer');
+            if (!container) return;
+            
+            container.addEventListener('mousedown', (e) => {
+                if (!window.previewData) return;
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+            });
+            
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging || !window.previewData) return;
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                window.previewPanX += dx;
+                window.previewPanY += dy;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                renderPreview();
+            });
+            
+            container.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            container.addEventListener('mouseleave', () => {
+                isDragging = false;
+            });
+            
+            // Mouse wheel zoom
+            container.addEventListener('wheel', (e) => {
+                if (!window.previewData) return;
+                e.preventDefault();
+                const factor = e.deltaY < 0 ? 1.1 : 0.9;
+                zoomPreview(factor);
+            });
+        })();
+        
         async function previewMap() {
             if (!selectedBounds) {
                 setStatus('error', 'Please select an area first');
@@ -1180,92 +1426,27 @@
             
             try {
                 const query = buildOverpassQuery();
-                const response = await fetchWithRetry('https://overpass-api.de/api/interpreter', {
+                const response = await fetchWithRetry(OVERPASS_SERVERS[currentServerIndex], {
                     method: 'POST',
                     body: query
                 });
                 
                 const data = await response.json();
                 
-                // Render to canvas instead of map overlay
-                const canvas = document.getElementById('previewCanvas');
-                const container = canvas.parentElement;
-                canvas.width = container.clientWidth;
-                canvas.height = 400;
-                const ctx = canvas.getContext('2d');
+                // Store data for zoom/pan
+                window.previewData = data;
+                window.previewZoom = 1.0;
+                window.previewPanX = 0;
+                window.previewPanY = 0;
                 
-                // Black background
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Calculate bounds for coordinate transformation
-                const bounds = selectedBounds;
-                const minLat = bounds.getSouth();
-                const maxLat = bounds.getNorth();
-                const minLon = bounds.getWest();
-                const maxLon = bounds.getEast();
-                
-                // Padding
-                const padding = 20;
-                const drawWidth = canvas.width - padding * 2;
-                const drawHeight = canvas.height - padding * 2;
-                
-                // Scale to fit while maintaining aspect ratio
-                const latRange = maxLat - minLat;
-                const lonRange = maxLon - minLon;
-                const latScale = drawHeight / latRange;
-                const lonScale = drawWidth / lonRange;
-                const scale = Math.min(latScale, lonScale);
-                
-                // Center offset
-                const offsetX = padding + (drawWidth - lonRange * scale) / 2;
-                const offsetY = padding + (drawHeight - latRange * scale) / 2;
-                
-                function toCanvasX(lon) {
-                    return offsetX + (lon - minLon) * scale;
-                }
-                function toCanvasY(lat) {
-                    return canvas.height - (offsetY + (lat - minLat) * scale);
-                }
-                
-                // Draw features
-                let featureCount = 0;
-                for (const element of data.elements) {
-                    if (element.type !== 'way' || !element.geometry) continue;
-                    
-                    const coords = element.geometry;
-                    if (coords.length < 2) continue;
-                    
-                    const style = getPreviewStyle(element.tags);
-                    if (!style) continue;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(toCanvasX(coords[0].lon), toCanvasY(coords[0].lat));
-                    for (let i = 1; i < coords.length; i++) {
-                        ctx.lineTo(toCanvasX(coords[i].lon), toCanvasY(coords[i].lat));
-                    }
-                    ctx.strokeStyle = style.color;
-                    ctx.lineWidth = style.weight || 1;
-                    if (style.dashArray) {
-                        ctx.setLineDash(style.dashArray.split(',').map(Number));
-                    } else {
-                        ctx.setLineDash([]);
-                    }
-                    ctx.stroke();
-                    featureCount++;
-                }
-                
-                // Draw border
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([]);
-                ctx.strokeRect(padding, padding, drawWidth, drawHeight);
+                // Render preview
+                renderPreview();
                 
                 // Show preview panel
                 document.getElementById('previewPanel').classList.add('active');
                 
-                document.getElementById('featureCount').textContent = featureCount;
-                setStatus('ready', 'Preview: ' + featureCount + ' features. Adjust settings and regenerate, or generate file.');
+                document.getElementById('featureCount').textContent = window.previewFeatureCount || 0;
+                setStatus('ready', 'Preview: ' + (window.previewFeatureCount || 0) + ' features. Adjust settings and regenerate, or generate file.');
                 
             } catch (error) {
                 setStatus('error', 'Preview error: ' + error.message);
@@ -1344,7 +1525,7 @@
                 
                 // Fetch data with retry
                 debugLog('FETCH', 'Fetching from Overpass API...');
-                const response = await fetchWithRetry('https://overpass-api.de/api/interpreter', {
+                const response = await fetchWithRetry(OVERPASS_SERVERS[currentServerIndex], {
                     method: 'POST',
                     body: query
                 });
@@ -1466,6 +1647,12 @@
             // Land Use
             if (document.getElementById('buildings').checked) {
                 query += `way["building"];\n`;
+            }
+            if (document.getElementById('buildingsLargeOnly').checked) {
+                // Filter for large buildings: 3+ floors OR 200m²+ area
+                query += `way["building"]["building:levels"~"^[3-9]$|^[1-9][0-9]+$"];\n`;
+                query += `way["building"](if:number(t["building:levels"])>=3);\n`;
+                query += `way["building"](if:area()>=200);\n`;
             }
             if (document.getElementById('industrial').checked) {
                 query += `way["landuse"="industrial"];\n`;
