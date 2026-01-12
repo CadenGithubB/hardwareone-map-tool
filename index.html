@@ -55,9 +55,9 @@
         }
         
         .map-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
         
         @media (max-width: 900px) {
@@ -70,6 +70,7 @@
             height: 650px;
             border-radius: 8px;
             border: 2px solid #333;
+            flex-shrink: 0;
         }
         
         .sidebar {
@@ -157,6 +158,24 @@
             margin-right: 8px;
         }
         
+        .feature-size {
+            color: #888;
+            font-size: 0.8em;
+            margin-left: 4px;
+        }
+        
+        .feature-size.large {
+            color: #ff6b6b;
+        }
+        
+        .feature-size.medium {
+            color: #ffd93d;
+        }
+        
+        .feature-size.small {
+            color: #69db7c;
+        }
+        
         .section-title::after {
             content: '▼';
             font-size: 0.7em;
@@ -183,6 +202,19 @@
             padding: 0;
         }
         
+        /* Nested sections container - display as block, not grid */
+        #allFeaturesContent {
+            display: block;
+        }
+        
+        #allFeaturesContent .section-title {
+            margin-top: 4px;
+        }
+        
+        #allFeaturesContent .section-content {
+            margin-bottom: 4px;
+        }
+        
         .slider-group {
             margin-bottom: 15px;
         }
@@ -200,23 +232,50 @@
             gap: 10px;
         }
         
-        .slider-row input[type="range"] {
-            flex: 1;
-            height: 6px;
+        /* All range sliders */
+        input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
-            background: #333;
+            height: 6px;
+            background: #555;
             border-radius: 3px;
             outline: none;
+            margin: 8px 0;
         }
         
-        .slider-row input[type="range"]::-webkit-slider-thumb {
+        input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 16px;
             height: 16px;
             background: #4cc9f0;
             border-radius: 50%;
             cursor: pointer;
+            margin-top: -5px;
+        }
+        
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            background: #555;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-moz-range-track {
+            height: 6px;
+            background: #555;
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            background: #4cc9f0;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-row input[type="range"] {
+            flex: 1;
         }
         
         .slider-value {
@@ -411,9 +470,8 @@
         .preview-panel {
             background: #16213e;
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px;
             display: none;
-            margin-top: 15px;
         }
         
         .preview-panel.active {
@@ -423,11 +481,10 @@
         .instructions-banner {
             background: #16213e;
             border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 20px;
+            padding: 10px 12px;
             display: flex;
             align-items: flex-start;
-            gap: 15px;
+            gap: 10px;
         }
         
         .instructions-banner.hidden {
@@ -498,12 +555,11 @@
         .map-legend {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            padding: 10px;
+            gap: 8px;
+            padding: 6px 10px;
             background: #16213e;
             border-radius: 4px;
-            font-size: 0.8em;
-            margin-top: 10px;
+            font-size: 0.75em;
         }
         
         .preview-canvas-container {
@@ -569,24 +625,23 @@
 <body>
     <div class="container">
         <header>
-            <h1>🗺️ HardwareOne Map Converter</h1>
+            <h1>HardwareOne Map Converter</h1>
             <p>Create offline map files for your ESP32 device</p>
         </header>
         
-        <div class="instructions-banner" id="instructionsBanner">
-            <div class="instructions-content">
-                <h3>How to Use</h3>
-                <ol>
-                    <li>Draw a rectangle on the map to select your area</li>
-                    <li>Adjust features and settings in the sidebar</li>
-                    <li>Click "Preview" to see what will be included, then "Generate" to download</li>
-                </ol>
-            </div>
-            <button class="instructions-close" onclick="document.getElementById('instructionsBanner').classList.add('hidden')">✕</button>
-        </div>
-        
         <div class="main-content">
             <div class="map-row">
+                <div class="instructions-banner" id="instructionsBanner">
+                    <div class="instructions-content">
+                        <h3>How to Use</h3>
+                        <ol>
+                            <li>Draw a rectangle or polygon on the map to select your area</li>
+                            <li>Adjust features and settings in the sidebar</li>
+                            <li>Click "Preview" to see what will be included, then "Generate" to download</li>
+                        </ol>
+                    </div>
+                    <button class="instructions-close" onclick="document.getElementById('instructionsBanner').classList.add('hidden')">✕</button>
+                </div>
                 <div id="map"></div>
                 <div class="map-legend">
                     <div class="legend-item"><span class="legend-color" style="background:#ff6b6b"></span> Highways</div>
@@ -598,7 +653,7 @@
                 </div>
                 <div class="preview-panel" id="previewPanel">
                     <div class="preview-header">
-                        <h3>📺 Preview - How it will look on device</h3>
+                        <h3>Preview - How it will look on device</h3>
                         <button class="preview-close" onclick="closePreview()">✕</button>
                     </div>
                     <div class="preview-canvas-container" id="previewContainer">
@@ -616,7 +671,7 @@
                 <h2>Map Settings</h2>
                 
                 <button class="btn btn-secondary" onclick="useMyLocation()">
-                    📍 Use My Location
+                    Use My Location
                 </button>
                 
                 <div class="form-group">
@@ -624,168 +679,220 @@
                     <input type="text" id="regionName" value="My Area" maxlength="15">
                 </div>
                 
-                <div class="form-group">
-                    <label>Include Features</label>
-                    
-                    <div class="section-title" onclick="toggleSection(this)" data-section="highways">Highways <span class="section-count" id="countHighways">(2/2)</span></div>
+                <!-- Waypoints Section - Near top for easy access -->
+                <div class="section-title" onclick="toggleSection(this)" data-section="waypoints" style="margin-bottom:0;">
+                    Waypoints <span class="section-count" id="countWaypoints">(0)</span>
+                </div>
+                <div class="section-content" style="padding:8px;background:#1a1a2e;border-radius:0 0 4px 4px;margin-bottom:12px;">
+                    <label class="checkbox-item" style="margin-bottom:8px;">
+                        <input type="checkbox" id="waypointAddMode" onchange="toggleWaypointMode()">
+                        <span>Click map to add waypoint</span>
+                    </label>
+                    <div id="waypointList" style="max-height:120px;overflow-y:auto;margin-bottom:8px;"></div>
+                    <div style="display:flex;gap:4px;">
+                        <button class="btn btn-secondary" onclick="exportWaypoints()" style="flex:1;padding:4px 6px;font-size:0.8em;">Export</button>
+                        <button class="btn btn-secondary" onclick="importWaypoints()" style="flex:1;padding:4px 6px;font-size:0.8em;">Import</button>
+                        <button class="btn btn-secondary" onclick="clearAllWaypoints()" style="flex:1;padding:4px 6px;font-size:0.8em;">Clear</button>
+                    </div>
+                </div>
+
+                <!-- Features Section - All feature categories nested inside -->
+                <div class="section-title" onclick="toggleSection(this)" data-section="allfeatures" style="background:#2a2a4e;margin-bottom:0;">
+                    Features <span class="section-count" id="countAllFeatures"></span>
+                </div>
+                <div class="section-content" id="allFeaturesContent" style="padding:4px 8px;background:#1a1a2e;border-radius:0 0 4px 4px;margin-bottom:12px;">
+                    <div class="section-title" onclick="toggleSection(this)" data-section="highways" style="font-size:0.9em;">Highways <span class="section-count" id="countHighways">(2/2)</span></div>
                     <div class="section-content">
                         <label class="checkbox-item">
                             <input type="checkbox" id="motorways" checked onchange="updateSectionCounts()">
-                            Motorways
+                            Motorways <span class="feature-size" id="size-motorways"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="trunkRoads" checked onchange="updateSectionCounts()">
-                            Trunk/US Routes
+                            Trunk/US Routes <span class="feature-size" id="size-trunkRoads"></span>
                         </label>
                     </div>
                     
-                    <div class="section-title" onclick="toggleSection(this)" data-section="roads">Roads <span class="section-count" id="countRoads">(2/5)</span></div>
+                    <div class="section-title" onclick="toggleSection(this)" data-section="roads" style="font-size:0.9em;">Roads <span class="section-count" id="countRoads">(2/5)</span></div>
                     <div class="section-content">
                         <label class="checkbox-item">
                             <input type="checkbox" id="primaryRoads" checked onchange="updateSectionCounts()">
-                            Primary
+                            Primary <span class="feature-size" id="size-primaryRoads"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="secondaryRoads" checked onchange="updateSectionCounts()">
-                            Secondary
+                            Secondary <span class="feature-size" id="size-secondaryRoads"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="tertiaryRoads" onchange="updateSectionCounts()">
-                            Tertiary
+                            Tertiary <span class="feature-size" id="size-tertiaryRoads"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="residentialRoads" onchange="updateSectionCounts()">
-                            Residential
+                            Residential <span class="feature-size" id="size-residentialRoads"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="serviceRoads" onchange="updateSectionCounts()">
-                            Service
+                            Service <span class="feature-size" id="size-serviceRoads"></span>
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="paths">Paths <span class="section-count" id="countPaths">(0/3)</span></div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="paths" style="font-size:0.9em;">Paths <span class="section-count" id="countPaths">(0/3)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
                             <input type="checkbox" id="footways" onchange="updateSectionCounts()">
-                            Footways
+                            Footways <span class="feature-size" id="size-footways"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="cycleways" onchange="updateSectionCounts()">
-                            Bike Paths
+                            Bike Paths <span class="feature-size" id="size-cycleways"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="tracks" onchange="updateSectionCounts()">
-                            Trails
+                            Trails <span class="feature-size" id="size-tracks"></span>
                         </label>
                     </div>
                     
-                    <div class="section-title" onclick="toggleSection(this)" data-section="water">Water <span class="section-count" id="countWater">(1/3)</span></div>
+                    <div class="section-title" onclick="toggleSection(this)" data-section="water" style="font-size:0.9em;">Water <span class="section-count" id="countWater">(1/3)</span></div>
                     <div class="section-content">
                         <label class="checkbox-item">
                             <input type="checkbox" id="waterBodies" checked onchange="updateSectionCounts()">
-                            Lakes/Ponds
+                            Lakes/Ponds <span class="feature-size" id="size-waterBodies"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="waterways" onchange="updateSectionCounts()">
-                            Rivers
+                            Rivers <span class="feature-size" id="size-waterways"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="coastlines" onchange="updateSectionCounts()">
-                            Coastlines
+                            Coastlines <span class="feature-size" id="size-coastlines"></span>
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="nature">Nature <span class="section-count" id="countNature">(0/3)</span></div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="nature" style="font-size:0.9em;">Nature <span class="section-count" id="countNature">(0/3)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
                             <input type="checkbox" id="parks" onchange="updateSectionCounts()">
-                            Parks
+                            Parks <span class="feature-size" id="size-parks"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="forests" onchange="updateSectionCounts()">
-                            Forests
+                            Forests <span class="feature-size" id="size-forests"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="grassland" onchange="updateSectionCounts()">
-                            Grassland
+                            Grassland <span class="feature-size" id="size-grassland"></span>
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="infrastructure">Infrastructure <span class="section-count" id="countInfrastructure">(0/3)</span></div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="infrastructure" style="font-size:0.9em;">Infrastructure <span class="section-count" id="countInfrastructure">(0/4)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
                             <input type="checkbox" id="railways" onchange="updateSectionCounts()">
-                            Railways
+                            Railways <span class="feature-size" id="size-railways"></span>
                         </label>
                         <label class="checkbox-item">
+                            <input type="checkbox" id="subways" onchange="updateSectionCounts()">
+                            Subways <span class="feature-size" id="size-subways"></span>
+                        </label>
+                        <div id="subwayRoutesList" style="display:none;grid-column:span 2;font-size:0.75em;max-height:120px;overflow-y:auto;background:#0d0d1a;border-radius:4px;padding:6px;margin:4px 0;"></div>
+                        <label class="checkbox-item">
                             <input type="checkbox" id="bridges" onchange="updateSectionCounts()">
-                            Bridges
+                            Bridges <span class="feature-size" id="size-bridges"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="powerlines" onchange="updateSectionCounts()">
-                            Power Lines
+                            Power Lines <span class="feature-size" id="size-powerlines"></span>
                         </label>
                     </div>
                     
-                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="landuse">Land Use <span class="section-count" id="countLanduse">(0/5)</span></div>
+                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="landuse" style="font-size:0.9em;">Land Use <span class="section-count" id="countLanduse">(0/5)</span></div>
                     <div class="section-content collapsed">
                         <label class="checkbox-item">
                             <input type="checkbox" id="buildings" onchange="updateSectionCounts()">
-                            Buildings
+                            Buildings <span class="feature-size" id="size-buildings"></span>
                         </label>
                         <label class="checkbox-item" style="grid-column: span 2; font-size: 0.85em; padding-left: 20px;">
                             <input type="checkbox" id="buildingsLargeOnly" onchange="updateSectionCounts()">
-                            Large only (3+ floors or 200m²+)
+                            Large only <span class="feature-size" id="size-buildingsLargeOnly"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="industrial" onchange="updateSectionCounts()">
-                            Industrial
+                            Industrial <span class="feature-size" id="size-industrial"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="commercial" onchange="updateSectionCounts()">
-                            Commercial
+                            Commercial <span class="feature-size" id="size-commercial"></span>
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="residential" onchange="updateSectionCounts()">
-                            Residential
+                            Residential <span class="feature-size" id="size-residential"></span>
                         </label>
                     </div>
                 </div>
                 
-                <div class="slider-group">
-                    <label>Detail Level (geometry simplification)</label>
-                    <div class="slider-row">
-                        <input type="range" id="detailLevel" min="1" max="5" value="2">
-                        <span class="slider-value" id="detailValue">Low</span>
+                <!-- Post-Processing Section -->
+                <div class="section-title" onclick="toggleSection(this)" data-section="postprocessing" style="background:#2a2a4e;margin-bottom:0;">
+                    Output Settings
+                </div>
+                <div class="section-content" id="outputSettingsContent" style="display:block;padding:10px 12px;background:#1a1a2e;border-radius:0 0 4px 4px;margin-bottom:12px;">
+                    <div class="slider-group" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.85em;color:#aaa;">Detail Level</label>
+                            <span class="slider-value" id="detailValue" style="font-size:0.85em;color:#4cc9f0;">Low</span>
+                        </div>
+                        <input type="range" id="detailLevel" min="1" max="5" value="2" style="width:100%;">
+                    </div>
+                    
+                    <div class="slider-group" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.85em;color:#aaa;">Max Points per Feature</label>
+                            <span class="slider-value" id="maxPointsValue" style="font-size:0.85em;color:#4cc9f0;">15</span>
+                        </div>
+                        <input type="range" id="maxPoints" min="5" max="50" step="5" value="15" style="width:100%;">
+                    </div>
+                    
+                    <div class="slider-group" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.85em;color:#aaa;">Target Size Budget</label>
+                            <span class="slider-value" id="budgetValue" style="font-size:0.85em;color:#4cc9f0;">500 KB</span>
+                        </div>
+                        <input type="range" id="sizeBudget" min="50" max="25000" step="50" value="500" style="width:100%;">
+                        <div class="size-bar" style="margin-top:6px;">
+                            <div class="size-bar-fill" id="sizeBarFill"></div>
+                        </div>
+                    </div>
+                    
+                    <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;gap:6px;">
+                        <input type="checkbox" id="autoFitBudget" checked>
+                        <span>Auto-trim to fit budget</span>
+                    </label>
+                    
+                    <div class="slider-group" style="margin-top:12px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.85em;color:#aaa;">Max Features</label>
+                            <span class="slider-value" id="maxFeaturesValue" style="font-size:0.85em;color:#4cc9f0;">5000</span>
+                        </div>
+                        <input type="range" id="maxFeatures" min="500" max="20000" step="500" value="5000" style="width:100%;">
+                        <div style="font-size:0.7em;color:#666;margin-top:4px;">
+                            Limit total features (drops least important first)
+                        </div>
+                    </div>
+                    
+                    <div class="slider-group" style="margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.85em;color:#aaa;">Name Detail</label>
+                            <span class="slider-value" id="nameDetailValue" style="font-size:0.85em;color:#4cc9f0;">Major Roads</span>
+                        </div>
+                        <input type="range" id="nameDetail" min="0" max="4" value="2" style="width:100%;">
+                        <div style="font-size:0.7em;color:#666;margin-top:4px;" id="nameDetailDesc">
+                            Highways + major roads get names for "where am I" context
+                        </div>
                     </div>
                 </div>
-                
-                <div class="slider-group">
-                    <label>Max Points per Road (more = smoother curves)</label>
-                    <div class="slider-row">
-                        <input type="range" id="maxPoints" min="5" max="50" step="5" value="15">
-                        <span class="slider-value" id="maxPointsValue">15 pts</span>
-                    </div>
-                </div>
-                
-                <div class="slider-group">
-                    <label>Target Size Budget</label>
-                    <div class="slider-row">
-                        <input type="range" id="sizeBudget" min="50" max="25000" step="50" value="500">
-                        <span class="slider-value" id="budgetValue">500 KB</span>
-                    </div>
-                    <div class="size-bar">
-                        <div class="size-bar-fill" id="sizeBarFill"></div>
-                    </div>
-                </div>
-                
-                <label class="checkbox-item" style="margin-bottom:10px;">
-                    <input type="checkbox" id="autoFitBudget" checked>
-                    <span>Auto-trim to fit budget (drops least important features)</span>
-                </label>
                 
                 <div class="size-warning" id="sizeWarning">
-                    ⚠️ Estimated size exceeds budget. Try reducing area or features.
+                    Estimated size exceeds budget. Try reducing area or features.
                 </div>
                 
                 <div class="stats">
@@ -808,9 +915,17 @@
                     <div id="breakdownContent"></div>
                 </div>
                 
+                <div id="mapFeaturesPanel" style="display:none;margin-top:10px;margin-bottom:12px;padding:10px;background:#1a1a2e;border-radius:4px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <span style="color:#4cc9f0;font-size:0.9em;font-weight:bold;">Map Features</span>
+                        <span id="metadataSizeEst" style="font-size:0.75em;color:#888;"></span>
+                    </div>
+                    <div id="mapFeaturesList" style="font-size:0.8em;max-height:200px;overflow-y:auto;"></div>
+                </div>
+                
                 <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
                     <button class="btn btn-secondary" id="previewBtn" onclick="previewMap()" disabled style="flex:1;margin-bottom:0;">
-                        👁️ Preview
+                        Preview Selection
                     </button>
                     <label class="checkbox-item" style="font-size:0.8em;white-space:nowrap;" title="Auto-refresh preview when settings change">
                         <input type="checkbox" id="autoPreview" onchange="handleAutoPreviewToggle()">
@@ -819,7 +934,7 @@
                 </div>
                 
                 <button class="btn btn-primary" id="generateBtn" onclick="generateMap()" disabled>
-                    🗺️ Generate Map File
+                    Generate Map File
                 </button>
                 
                 <div class="progress-bar" id="progressBar">
@@ -827,11 +942,11 @@
                 </div>
                 
                 <div class="status ready" id="status">
-                    Draw a rectangle on the map to select area
+                    Draw a rectangle or polygon on the map to select area
                 </div>
                 
                 <button class="btn btn-clear" id="clearBtn" onclick="clearSelection()" style="display:none;">
-                    🗑️ Clear Selection
+                    Clear Selection
                 </button>
             </div>
         </div>
@@ -892,6 +1007,240 @@
         let previewLayer = new L.LayerGroup();
         map.addLayer(previewLayer);
         
+        // =============================================================================
+        // WAYPOINT MANAGEMENT
+        // =============================================================================
+        
+        let waypoints = [];
+        let waypointMarkers = [];
+        let waypointAddMode = false;
+        let waypointIdCounter = 0;
+        
+        // Load waypoints from localStorage on startup
+        function loadWaypointsFromStorage() {
+            try {
+                const stored = localStorage.getItem('mapgen_waypoints');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    waypoints = data.waypoints || [];
+                    waypointIdCounter = data.nextId || waypoints.length;
+                    renderWaypointMarkers();
+                    updateWaypointList();
+                }
+            } catch (e) {
+                console.error('Failed to load waypoints:', e);
+            }
+        }
+        
+        // Save waypoints to localStorage
+        function saveWaypointsToStorage() {
+            try {
+                const data = {
+                    waypoints: waypoints,
+                    nextId: waypointIdCounter,
+                    savedAt: new Date().toISOString()
+                };
+                localStorage.setItem('mapgen_waypoints', JSON.stringify(data));
+            } catch (e) {
+                console.error('Failed to save waypoints:', e);
+            }
+        }
+        
+        // Toggle waypoint add mode
+        function toggleWaypointMode() {
+            waypointAddMode = document.getElementById('waypointAddMode').checked;
+            if (waypointAddMode) {
+                map.getContainer().style.cursor = 'crosshair';
+                setStatus('Click on the map to add a waypoint', 'ready');
+            } else {
+                map.getContainer().style.cursor = '';
+                setStatus('Draw a rectangle on the map to select area', 'ready');
+            }
+        }
+        
+        // Add waypoint at clicked location
+        function addWaypoint(lat, lon, name) {
+            const id = waypointIdCounter++;
+            const waypoint = {
+                id: id,
+                name: name || `WP${waypoints.length + 1}`,
+                lat: lat,
+                lon: lon
+            };
+            waypoints.push(waypoint);
+            saveWaypointsToStorage();
+            renderWaypointMarkers();
+            updateWaypointList();
+            return waypoint;
+        }
+        
+        // Delete waypoint by id
+        function deleteWaypoint(id) {
+            waypoints = waypoints.filter(wp => wp.id !== id);
+            saveWaypointsToStorage();
+            renderWaypointMarkers();
+            updateWaypointList();
+        }
+        
+        // Rename waypoint
+        function renameWaypoint(id) {
+            const wp = waypoints.find(w => w.id === id);
+            if (!wp) return;
+            
+            const newName = prompt('Enter waypoint name:', wp.name);
+            if (newName && newName.trim()) {
+                wp.name = newName.trim().substring(0, 11);
+                saveWaypointsToStorage();
+                renderWaypointMarkers();
+                updateWaypointList();
+            }
+        }
+        
+        // Clear all waypoints
+        function clearAllWaypoints() {
+            if (!waypoints.length) return;
+            if (!confirm(`Delete all ${waypoints.length} waypoint(s)?`)) return;
+            
+            waypoints = [];
+            saveWaypointsToStorage();
+            renderWaypointMarkers();
+            updateWaypointList();
+        }
+        
+        // Render waypoint markers on map
+        function renderWaypointMarkers() {
+            // Clear existing markers
+            waypointMarkers.forEach(marker => map.removeLayer(marker));
+            waypointMarkers = [];
+            
+            // Add new markers
+            waypoints.forEach(wp => {
+                const marker = L.marker([wp.lat, wp.lon], {
+                    icon: L.divIcon({
+                        className: 'waypoint-marker',
+                        html: `<div style="background:#ffd93d;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [16, 16],
+                        iconAnchor: [8, 8]
+                    })
+                }).addTo(map);
+                
+                marker.bindPopup(`
+                    <div style="font-family:system-ui,sans-serif;">
+                        <strong>${wp.name}</strong><br>
+                        <small>${wp.lat.toFixed(5)}, ${wp.lon.toFixed(5)}</small><br>
+                        <button onclick="renameWaypoint(${wp.id})" style="margin-top:4px;padding:2px 6px;font-size:0.8em;">Rename</button>
+                        <button onclick="deleteWaypoint(${wp.id})" style="margin-top:4px;padding:2px 6px;font-size:0.8em;background:#f44336;color:#fff;border:none;border-radius:3px;cursor:pointer;">Delete</button>
+                    </div>
+                `);
+                
+                waypointMarkers.push(marker);
+            });
+        }
+        
+        // Update waypoint list in sidebar
+        function updateWaypointList() {
+            const listEl = document.getElementById('waypointList');
+            const countEl = document.getElementById('countWaypoints');
+            
+            countEl.textContent = `(${waypoints.length})`;
+            
+            if (waypoints.length === 0) {
+                listEl.innerHTML = '<p style="color:#666;font-size:0.85em;text-align:center;padding:10px 0;">No waypoints yet</p>';
+                return;
+            }
+            
+            let html = '<div style="font-size:0.85em;">';
+            waypoints.forEach(wp => {
+                html += `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #333;">
+                        <div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${wp.name}">
+                            📍 ${wp.name}
+                        </div>
+                        <div style="display:flex;gap:4px;">
+                            <button onclick="renameWaypoint(${wp.id})" style="padding:2px 6px;font-size:0.75em;background:#2196F3;color:#fff;border:none;border-radius:3px;cursor:pointer;">✏️</button>
+                            <button onclick="deleteWaypoint(${wp.id})" style="padding:2px 6px;font-size:0.75em;background:#f44336;color:#fff;border:none;border-radius:3px;cursor:pointer;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            listEl.innerHTML = html;
+        }
+        
+        // Export waypoints to JSON file
+        function exportWaypoints() {
+            if (waypoints.length === 0) {
+                alert('No waypoints to export');
+                return;
+            }
+            
+            const data = {
+                waypoints: waypoints.map(wp => ({
+                    name: wp.name,
+                    lat: wp.lat,
+                    lon: wp.lon
+                })),
+                exportedAt: new Date().toISOString(),
+                version: 1
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const filename = `waypoints_${new Date().toISOString().split('T')[0]}.json`;
+            downloadBlob(blob, filename);
+        }
+        
+        // Import waypoints from JSON file
+        function importWaypoints() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const data = JSON.parse(evt.target.result);
+                        if (!data.waypoints || !Array.isArray(data.waypoints)) {
+                            alert('Invalid waypoint file format');
+                            return;
+                        }
+                        
+                        const importCount = data.waypoints.length;
+                        if (!confirm(`Import ${importCount} waypoint(s)? This will add to existing waypoints.`)) {
+                            return;
+                        }
+                        
+                        data.waypoints.forEach(wp => {
+                            if (wp.lat && wp.lon) {
+                                addWaypoint(wp.lat, wp.lon, wp.name || 'Imported');
+                            }
+                        });
+                        
+                        alert(`Successfully imported ${importCount} waypoint(s)`);
+                    } catch (err) {
+                        alert('Failed to parse waypoint file: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+        
+        // Map click handler for adding waypoints
+        map.on('click', function(e) {
+            if (waypointAddMode) {
+                const name = prompt('Enter waypoint name:', `WP${waypoints.length + 1}`);
+                if (name !== null) {
+                    addWaypoint(e.latlng.lat, e.latlng.lng, name || `WP${waypoints.length + 1}`);
+                }
+            }
+        });
+        
+        // Load waypoints on startup
+        loadWaypointsFromStorage();
+        
         // Handle drawing events
         map.on(L.Draw.Event.CREATED, function(e) {
             drawnItems.clearLayers();
@@ -936,11 +1285,16 @@
             }
         }
         
+        const AUTO_PREVIEW_DEBOUNCE_MS = 5000;
         let autoPreviewTimeout = null;
         let autoPreviewEnabled = false;
         
         function handleAutoPreviewToggle() {
             autoPreviewEnabled = document.getElementById('autoPreview').checked;
+            if (!autoPreviewEnabled && autoPreviewTimeout) {
+                clearTimeout(autoPreviewTimeout);
+                autoPreviewTimeout = null;
+            }
             if (autoPreviewEnabled && selectedBounds) {
                 triggerAutoPreview();
             }
@@ -949,13 +1303,13 @@
         function triggerAutoPreview() {
             if (!autoPreviewEnabled || !selectedBounds) return;
             
-            // Debounce - wait 500ms after last change before refreshing
+            // Debounce - wait for changes to settle before contacting the API
             if (autoPreviewTimeout) {
                 clearTimeout(autoPreviewTimeout);
             }
             autoPreviewTimeout = setTimeout(() => {
                 previewMap();
-            }, 500);
+            }, AUTO_PREVIEW_DEBOUNCE_MS);
         }
         
         function updateSectionCounts() {
@@ -965,7 +1319,7 @@
                 paths: ['footways', 'cycleways', 'tracks'],
                 water: ['waterBodies', 'waterways', 'coastlines'],
                 nature: ['parks', 'forests', 'grassland'],
-                infrastructure: ['railways', 'bridges', 'powerlines'],
+                infrastructure: ['railways', 'subways', 'bridges', 'powerlines'],
                 landuse: ['buildings', 'buildingsLargeOnly', 'industrial', 'commercial', 'residential']
             };
             
@@ -1101,7 +1455,13 @@
         function estimateSize(areaKm2) {
             const detailLevel = parseInt(document.getElementById('detailLevel').value);
             const maxPoints = parseInt(document.getElementById('maxPoints').value);
+            const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
             const detailMultiplier = [0.4, 0.6, 1.0, 1.5, 2.0][detailLevel - 1];
+            
+            // Name overhead: avg ~20 bytes per name + 2 bytes per feature for nameIndex
+            // Level 0: no names, Level 1: ~5% features, Level 2: ~15%, Level 3: ~40%, Level 4: ~60%
+            const namePercent = [0, 0.05, 0.15, 0.40, 0.60][nameDetailLevel];
+            const avgNameLen = 18; // Average name length in bytes
             
             // Size estimates per km² for each feature type (base values, avgPoints)
             const estimates = [
@@ -1128,6 +1488,7 @@
                 { id: 'grassland', name: 'Grassland', base: 3500, avgPts: 20 },
                 // Infrastructure
                 { id: 'railways', name: 'Railways', base: 3000, avgPts: 25 },
+                { id: 'subways', name: 'Subways', base: 4000, avgPts: 30 },
                 { id: 'bridges', name: 'Bridges', base: 1500, avgPts: 15 },
                 { id: 'powerlines', name: 'Power Lines', base: 4000, avgPts: 20 },
                 // Land Use
@@ -1143,16 +1504,44 @@
             
             for (const est of estimates) {
                 const el = document.getElementById(est.id);
+                const sizeEl = document.getElementById('size-' + est.id);
+                
+                // Calculate size for this feature (even if unchecked, for display)
+                const ptsScale = Math.min(1.0, maxPoints / est.avgPts);
+                const bytes = Math.round(areaKm2 * est.base * detailMultiplier * ptsScale);
+                const kb = Math.round(bytes / 1024);
+                
+                // Update inline size indicator
+                if (sizeEl && areaKm2 > 0) {
+                    const sizeClass = kb > 200 ? 'large' : kb > 100 ? 'medium' : 'small';
+                    sizeEl.textContent = kb > 0 ? `(${kb}KB)` : '';
+                    sizeEl.className = 'feature-size ' + sizeClass;
+                } else if (sizeEl) {
+                    sizeEl.textContent = '';
+                }
+                
+                // Add to total if checked
                 if (el && el.checked) {
-                    // Scale by points multiplier - features with more points are affected more
-                    const ptsScale = Math.min(1.0, maxPoints / est.avgPts);
-                    const bytes = Math.round(areaKm2 * est.base * detailMultiplier * ptsScale);
-                    const kb = Math.round(bytes / 1024);
                     totalBytes += bytes;
                     if (kb > 0) {
                         const color = kb > 200 ? '#ff6b6b' : kb > 100 ? '#ffd93d' : '#69db7c';
                         breakdownHtml += '<div style="display:flex;justify-content:space-between;"><span>' + est.name + '</span><span style="color:' + color + '">' + kb + ' KB</span></div>';
                     }
+                }
+            }
+            
+            // Add name overhead based on name detail level
+            // Each feature gets +2 bytes for nameIndex, plus avg name length for named features
+            const estFeatures = Math.round(areaKm2 * 50 * detailMultiplier);
+            const nameOverhead = estFeatures * 2 + // nameIndex for all features
+                                 Math.round(estFeatures * namePercent * avgNameLen); // name table
+            totalBytes += nameOverhead;
+            
+            // Add to breakdown if names enabled
+            if (namePercent > 0 && areaKm2 > 0) {
+                const nameKB = Math.round(nameOverhead / 1024);
+                if (nameKB > 0) {
+                    breakdownHtml += '<div style="display:flex;justify-content:space-between;"><span>Feature Names</span><span style="color:#4cc9f0">' + nameKB + ' KB</span></div>';
                 }
             }
             
@@ -1288,12 +1677,36 @@
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Calculate bounds for coordinate transformation
-            const bounds = selectedBounds;
-            const minLat = bounds.getSouth();
-            const maxLat = bounds.getNorth();
-            const minLon = bounds.getWest();
-            const maxLon = bounds.getEast();
+            // Use bounds stored WITH the data to ensure consistency
+            const storedBounds = window.previewData.bounds;
+            const storedPolygon = window.previewData.polygon;
+            const minLat = storedBounds.minLat;
+            const maxLat = storedBounds.maxLat;
+            const minLon = storedBounds.minLon;
+            const maxLon = storedBounds.maxLon;
+            
+            console.log('Using stored bounds:', storedBounds);
+            console.log('Using stored polygon:', storedPolygon ? storedPolygon.length + ' points' : 'none');
+            
+            // Point-in-polygon test (same as in filter)
+            function pointInPolygon(lon, lat, polygon) {
+                if (!polygon || polygon.length < 3) return true;
+                let inside = false;
+                for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                    const yi = polygon[i][0], xi = polygon[i][1];
+                    const yj = polygon[j][0], xj = polygon[j][1];
+                    if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+                        inside = !inside;
+                    }
+                }
+                return inside;
+            }
+            
+            function inSelection(lon, lat) {
+                if (lon < minLon || lon > maxLon || lat < minLat || lat > maxLat) return false;
+                if (storedPolygon) return pointInPolygon(lon, lat, storedPolygon);
+                return true;
+            }
             
             // Padding
             const padding = 20;
@@ -1319,7 +1732,13 @@
                 return canvas.height - (offsetY + (lat - minLat) * scale);
             }
             
-            // Draw features
+            // HARD CLIP using canvas - this WILL work
+            const clipX = toCanvasX(minLon);
+            const clipY = toCanvasY(maxLat);
+            const clipW = toCanvasX(maxLon) - clipX;
+            const clipH = toCanvasY(minLat) - clipY;
+            
+            // Draw features - MANUALLY clip by not drawing outside bounds
             let featureCount = 0;
             for (const element of window.previewData.elements) {
                 if (element.type !== 'way' || !element.geometry) continue;
@@ -1330,27 +1749,55 @@
                 const style = getPreviewStyle(element.tags);
                 if (!style) continue;
                 
-                ctx.beginPath();
-                ctx.moveTo(toCanvasX(coords[0].lon), toCanvasY(coords[0].lat));
-                for (let i = 1; i < coords.length; i++) {
-                    ctx.lineTo(toCanvasX(coords[i].lon), toCanvasY(coords[i].lat));
-                }
                 ctx.strokeStyle = style.color;
-                ctx.lineWidth = (style.weight || 1) * window.previewZoom;
+                // Don't scale line width with zoom - keep lines thin when zoomed in
+                ctx.lineWidth = Math.max(1, Math.min(style.weight || 1, 2));
                 if (style.dashArray) {
-                    ctx.setLineDash(style.dashArray.split(',').map(n => Number(n) * window.previewZoom));
+                    ctx.setLineDash(style.dashArray.split(',').map(n => Number(n)));
                 } else {
                     ctx.setLineDash([]);
                 }
-                ctx.stroke();
+                
+                // Only draw points that are STRICTLY inside selection (polygon or bounds)
+                ctx.beginPath();
+                let inPath = false;
+                for (const p of coords) {
+                    // STRICT selection check (polygon or bounds)
+                    if (!inSelection(p.lon, p.lat)) {
+                        // Outside selection - end current path segment
+                        if (inPath) {
+                            ctx.stroke();
+                            ctx.beginPath();
+                            inPath = false;
+                        }
+                        continue;
+                    }
+                    
+                    const cx = toCanvasX(p.lon), cy = toCanvasY(p.lat);
+                    if (!inPath) {
+                        ctx.moveTo(cx, cy);
+                        inPath = true;
+                    } else {
+                        ctx.lineTo(cx, cy);
+                    }
+                }
+                if (inPath) ctx.stroke();
                 featureCount++;
             }
             
-            // Draw border
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
+            console.log('Features rendered:', featureCount);
+            
+            // Draw bounds border (cyan) to show exact clip region
+            ctx.strokeStyle = '#4cc9f0';
+            ctx.lineWidth = 2;
             ctx.setLineDash([]);
-            ctx.strokeRect(padding, padding, drawWidth, drawHeight);
+            const bx1 = toCanvasX(minLon), by1 = toCanvasY(maxLat);
+            const bx2 = toCanvasX(maxLon), by2 = toCanvasY(minLat);
+            ctx.strokeRect(bx1, by1, bx2 - bx1, by2 - by1);
+            
+            // Debug log bounds
+            console.log('Preview bounds:', {minLat, maxLat, minLon, maxLon});
+            console.log('Canvas clip rect:', {bx1, by1, width: bx2-bx1, height: by2-by1});
             
             window.previewFeatureCount = featureCount;
         }
@@ -1390,7 +1837,7 @@
                 const dx = e.clientX - lastX;
                 const dy = e.clientY - lastY;
                 window.previewPanX += dx;
-                window.previewPanY += dy;
+                window.previewPanY -= dy;
                 lastX = e.clientX;
                 lastY = e.clientY;
                 renderPreview();
@@ -1433,20 +1880,245 @@
                 
                 const data = await response.json();
                 
-                // Store data for zoom/pan
-                window.previewData = data;
+                // Extract subway route relations and display them
+                const subwayRoutes = [];
+                for (const el of (data.elements || [])) {
+                    if (el.type === 'relation' && el.tags && el.tags.route === 'subway') {
+                        subwayRoutes.push({
+                            ref: el.tags.ref || '?',
+                            name: el.tags.name || 'Unknown',
+                            colour: el.tags.colour || el.tags.color || '#da77f2',
+                            network: el.tags.network || '',
+                            operator: el.tags.operator || ''
+                        });
+                    }
+                }
+                
+                // Display subway routes if any found
+                const routesList = document.getElementById('subwayRoutesList');
+                if (subwayRoutes.length > 0) {
+                    // Sort by ref
+                    subwayRoutes.sort((a, b) => a.ref.localeCompare(b.ref, undefined, {numeric: true}));
+                    // Remove duplicates by ref
+                    const seen = new Set();
+                    const uniqueRoutes = subwayRoutes.filter(r => {
+                        if (seen.has(r.ref)) return false;
+                        seen.add(r.ref);
+                        return true;
+                    });
+                    
+                    routesList.innerHTML = '<div style="color:#4cc9f0;margin-bottom:4px;">Detected Routes:</div>' +
+                        uniqueRoutes.map(r => 
+                            `<div style="display:flex;align-items:center;gap:6px;margin:2px 0;">` +
+                            `<span style="background:${r.colour};color:#fff;padding:1px 6px;border-radius:3px;font-weight:bold;min-width:24px;text-align:center;">${r.ref}</span>` +
+                            `<span style="color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.name}">${r.name}</span>` +
+                            `</div>`
+                        ).join('');
+                    routesList.style.display = 'block';
+                    console.log('Subway routes found:', uniqueRoutes);
+                } else {
+                    routesList.style.display = 'none';
+                }
+                
+                // Extract all named features for the Map Features panel
+                const namedFeatures = {
+                    highways: [],
+                    roads: [],
+                    water: [],
+                    parks: [],
+                    railways: []
+                };
+                let totalMetadataBytes = 0;
+                
+                for (const el of (data.elements || [])) {
+                    if (el.type !== 'way' || !el.tags) continue;
+                    
+                    const name = el.tags.name;
+                    const ref = el.tags.ref;
+                    if (!name && !ref) continue;
+                    
+                    const label = ref ? (name ? `${ref} - ${name}` : ref) : name;
+                    const bytes = (label || '').length + 1; // +1 for null terminator
+                    
+                    if (el.tags.highway) {
+                        if (['motorway', 'trunk', 'motorway_link', 'trunk_link'].includes(el.tags.highway)) {
+                            if (!namedFeatures.highways.find(f => f.label === label)) {
+                                namedFeatures.highways.push({ label, ref, name, bytes });
+                                totalMetadataBytes += bytes;
+                            }
+                        } else if (['primary', 'secondary', 'tertiary', 'residential'].includes(el.tags.highway)) {
+                            if (!namedFeatures.roads.find(f => f.label === label)) {
+                                namedFeatures.roads.push({ label, ref, name, bytes });
+                                totalMetadataBytes += bytes;
+                            }
+                        }
+                    } else if (el.tags.natural === 'water' || el.tags.waterway) {
+                        if (!namedFeatures.water.find(f => f.label === label)) {
+                            namedFeatures.water.push({ label, ref, name, bytes });
+                            totalMetadataBytes += bytes;
+                        }
+                    } else if (el.tags.leisure === 'park' || el.tags.landuse === 'grass') {
+                        if (!namedFeatures.parks.find(f => f.label === label)) {
+                            namedFeatures.parks.push({ label, ref, name, bytes });
+                            totalMetadataBytes += bytes;
+                        }
+                    } else if (el.tags.railway) {
+                        if (!namedFeatures.railways.find(f => f.label === label)) {
+                            namedFeatures.railways.push({ label, ref, name, bytes });
+                            totalMetadataBytes += bytes;
+                        }
+                    }
+                }
+                
+                // Add subway routes to metadata size
+                for (const r of subwayRoutes) {
+                    totalMetadataBytes += (r.name || '').length + (r.ref || '').length + 2;
+                }
+                
+                // Display Map Features panel (only if names will be included)
+                const featuresPanel = document.getElementById('mapFeaturesPanel');
+                const featuresList = document.getElementById('mapFeaturesList');
+                const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
+                const totalNamedFeatures = namedFeatures.highways.length + namedFeatures.roads.length + 
+                    namedFeatures.water.length + namedFeatures.parks.length + namedFeatures.railways.length + subwayRoutes.length;
+                
+                if (totalNamedFeatures > 0 && nameDetailLevel > 0) {
+                    // Overhead for index table: ~4 bytes per feature (id + offset)
+                    const indexOverhead = totalNamedFeatures * 4;
+                    const totalWithOverhead = totalMetadataBytes + indexOverhead;
+                    
+                    document.getElementById('metadataSizeEst').textContent = 
+                        `+${(totalWithOverhead / 1024).toFixed(1)} KB if included`;
+                    
+                    let html = '';
+                    
+                    const addSection = (title, items, color) => {
+                        if (items.length === 0) return;
+                        html += `<div style="margin-bottom:8px;">`;
+                        html += `<div style="color:${color};font-weight:bold;margin-bottom:4px;">${title} (${items.length})</div>`;
+                        html += `<div style="color:#aaa;padding-left:8px;">`;
+                        // Show first 10, then "and X more"
+                        const shown = items.slice(0, 10);
+                        html += shown.map(f => `<div style="margin:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.label}">${f.label}</div>`).join('');
+                        if (items.length > 10) {
+                            html += `<div style="color:#666;font-style:italic;">...and ${items.length - 10} more</div>`;
+                        }
+                        html += `</div></div>`;
+                    };
+                    
+                    addSection('Highways', namedFeatures.highways, '#ff6b6b');
+                    addSection('Roads', namedFeatures.roads, '#ffd93d');
+                    addSection('Water', namedFeatures.water, '#4dabf7');
+                    addSection('Parks', namedFeatures.parks, '#69db7c');
+                    addSection('Railways', namedFeatures.railways, '#da77f2');
+                    
+                    featuresList.innerHTML = html;
+                    featuresPanel.style.display = 'block';
+                    
+                    // Store for use in binary generation
+                    window.extractedMetadata = {
+                        namedFeatures,
+                        subwayRoutes: subwayRoutes,
+                        totalBytes: totalWithOverhead
+                    };
+                    
+                    console.log('Named features:', namedFeatures);
+                    console.log('Metadata size estimate:', totalWithOverhead, 'bytes');
+                } else {
+                    featuresPanel.style.display = 'none';
+                    window.extractedMetadata = null;
+                }
+                
+                // CLIP ALL GEOMETRY TO BOUNDS (and polygon if drawn) before storing
+                const bounds = selectedBounds;
+                const minLat = bounds.getSouth(), maxLat = bounds.getNorth();
+                const minLon = bounds.getWest(), maxLon = bounds.getEast();
+                
+                console.log('=== CLIPPING DEBUG ===');
+                console.log('Clip bounds:', {minLat, maxLat, minLon, maxLon});
+                console.log('Polygon selection:', selectedPolygon ? selectedPolygon.length + ' points' : 'none (rectangle)');
+                
+                // Point-in-polygon test using ray casting
+                function pointInPolygon(lon, lat, polygon) {
+                    if (!polygon || polygon.length < 3) return true; // No polygon = use bounds only
+                    let inside = false;
+                    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                        const yi = polygon[i][0], xi = polygon[i][1]; // [lat, lng]
+                        const yj = polygon[j][0], xj = polygon[j][1];
+                        if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+                            inside = !inside;
+                        }
+                    }
+                    return inside;
+                }
+                
+                // Check if point is inside selection (polygon or bounds)
+                function inSelection(lon, lat) {
+                    // First check bounding box (fast)
+                    if (lon < minLon || lon > maxLon || lat < minLat || lat > maxLat) return false;
+                    // Then check polygon if exists
+                    if (selectedPolygon) {
+                        return pointInPolygon(lon, lat, selectedPolygon);
+                    }
+                    return true;
+                }
+                
+                const clippedElements = [];
+                let stats = {total: 0, kept: 0, dropped: 0, badAfter: 0};
+                
+                for (const el of (data.elements || [])) {
+                    if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) continue;
+                    
+                    // STRICT: Only keep points inside selection (polygon or bounds)
+                    const filteredGeom = [];
+                    for (const p of el.geometry) {
+                        stats.total++;
+                        if (inSelection(p.lon, p.lat)) {
+                            filteredGeom.push({lon: p.lon, lat: p.lat});
+                            stats.kept++;
+                        } else {
+                            stats.dropped++;
+                        }
+                    }
+                    
+                    if (filteredGeom.length >= 2) {
+                        clippedElements.push({...el, geometry: filteredGeom});
+                    }
+                }
+                
+                // VERIFY no bad points remain
+                for (const el of clippedElements) {
+                    for (const p of el.geometry) {
+                        if (!inSelection(p.lon, p.lat)) {
+                            stats.badAfter++;
+                            console.error('BAD POINT AFTER FILTER:', p);
+                        }
+                    }
+                }
+                
+                console.log('Stats:', stats);
+                console.log('Elements kept:', clippedElements.length);
+                
+                // Clear any old data and store filtered data (include polygon if exists)
+                window.previewData = null;
+                window.previewData = {
+                    elements: clippedElements, 
+                    bounds: {minLon, maxLon, minLat, maxLat},
+                    polygon: selectedPolygon ? [...selectedPolygon] : null
+                };
                 window.previewZoom = 1.0;
                 window.previewPanX = 0;
                 window.previewPanY = 0;
                 
-                // Render preview
-                renderPreview();
-                
-                // Show preview panel
+                // Show preview panel FIRST so canvas has proper dimensions
                 document.getElementById('previewPanel').classList.add('active');
                 
-                document.getElementById('featureCount').textContent = window.previewFeatureCount || 0;
-                setStatus('ready', 'Preview: ' + (window.previewFeatureCount || 0) + ' features. Adjust settings and regenerate, or generate file.');
+                // Render after panel is visible (use requestAnimationFrame to ensure layout is complete)
+                requestAnimationFrame(() => {
+                    renderPreview();
+                    document.getElementById('featureCount').textContent = window.previewFeatureCount || 0;
+                    setStatus('ready', 'Preview: ' + (window.previewFeatureCount || 0) + ' features. Adjust settings and regenerate, or generate file.');
+                });
                 
             } catch (error) {
                 setStatus('error', 'Preview error: ' + error.message);
@@ -1635,7 +2307,13 @@
             
             // Infrastructure
             if (document.getElementById('railways').checked) {
-                query += `way["railway"~"rail|light_rail|subway|tram"];\n`;
+                query += `way["railway"~"rail|light_rail|tram"];\n`;
+            }
+            if (document.getElementById('subways').checked) {
+                // Direct subway track ways
+                query += `way["railway"="subway"];\n`;
+                // Subway route relations (NYC, London, etc store routes as relations)
+                query += `relation["route"="subway"];\n`;
             }
             if (document.getElementById('bridges').checked) {
                 query += `way["bridge"="yes"];\n`;
@@ -1664,12 +2342,29 @@
                 query += `way["landuse"="residential"];\n`;
             }
             
-            query += `);out geom;`;
+            // Use recursion to expand relation members into ways
+            query += `);(._;>;);out geom;`;
             return query;
         }
         
         // =============================================================================
-        // BINARY CONVERSION
+        // BINARY CONVERSION - HWMAP v2 FORMAT
+        // =============================================================================
+        // 
+        // v2 Format:
+        //   Header (40 bytes):
+        //     Magic: "HWMP" (4), Version: uint16 (2), Flags: uint16 (2)
+        //     Bounds: minLat, minLon, maxLat, maxLon (4×int32 = 16)
+        //     FeatureCount: uint32 (4), NameCount: uint16 (2)
+        //     RegionName: char[8] (8), Padding: 2 bytes
+        //   
+        //   Name Table (variable):
+        //     For each name: Length: uint8, String: char[Length]
+        //   
+        //   Features (variable):
+        //     Type: uint8, NameIndex: uint16 (0xFFFF = unnamed), PointCount: uint8
+        //     FirstPoint: lat + lon (2×int32), DeltaPoints: (N-1) × (dLat + dLon as int16)
+        //
         // =============================================================================
         
         // Feature types matching device-side enum
@@ -1684,12 +2379,14 @@
             BUILDING: 0x30
         };
         
+        const HWMAP_NO_NAME = 0xFFFF;  // Marker for unnamed features
+        
         function convertToHWMap(osmData) {
             const sw = selectedBounds.getSouthWest();
             const ne = selectedBounds.getNorthEast();
-            const regionName = document.getElementById('regionName').value.substring(0, 15);
+            const regionName = document.getElementById('regionName').value.substring(0, 7); // Max 7 chars + null
             
-            debugLog('CONVERT', 'Starting conversion...');
+            debugLog('CONVERT', '=== Starting HWMAP v2 conversion ===');
             debugLog('CONVERT', 'Input elements:', osmData.elements?.length || 0);
             
             // Process features
@@ -1706,6 +2403,52 @@
             debugLog('CONVERT', 'Detail level:', detailLevel, 'Tolerance:', tolerance);
             debugLog('CONVERT', 'Max points per feature:', maxPointsPerFeature);
             debugLog('CONVERT', 'Auto-fit budget:', autoFitBudget, 'Budget:', budgetBytes, 'bytes');
+            
+            // Name detail level: 0=none, 1=highways, 2=major roads, 3=all roads, 4=everything
+            const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
+            debugLog('CONVERT', 'Name detail level:', nameDetailLevel);
+            
+            // Name table: map name string -> index, and list of unique names
+            const nameMap = new Map();  // name -> index
+            const nameList = [];        // ordered list of unique names
+            
+            // Check if a feature type should get a name based on name detail level
+            function shouldIncludeName(featureType) {
+                if (nameDetailLevel === 0) return false;  // None
+                if (nameDetailLevel === 1) {
+                    // Highways only
+                    return featureType === FEATURE_TYPES.ROAD_HIGHWAY;
+                }
+                if (nameDetailLevel === 2) {
+                    // Major roads (highways + major)
+                    return featureType === FEATURE_TYPES.ROAD_HIGHWAY || 
+                           featureType === FEATURE_TYPES.ROAD_MAJOR;
+                }
+                if (nameDetailLevel === 3) {
+                    // All roads
+                    return featureType === FEATURE_TYPES.ROAD_HIGHWAY || 
+                           featureType === FEATURE_TYPES.ROAD_MAJOR ||
+                           featureType === FEATURE_TYPES.ROAD_MINOR ||
+                           featureType === FEATURE_TYPES.ROAD_PATH;
+                }
+                // Level 4 = everything
+                return true;
+            }
+            
+            function getOrAddName(name, featureType) {
+                if (!name || name.length === 0) return HWMAP_NO_NAME;
+                if (!shouldIncludeName(featureType)) return HWMAP_NO_NAME;
+                
+                // Truncate to 63 chars max (stored as uint8 length)
+                const truncated = name.substring(0, 63);
+                if (nameMap.has(truncated)) {
+                    return nameMap.get(truncated);
+                }
+                const idx = nameList.length;
+                nameMap.set(truncated, idx);
+                nameList.push(truncated);
+                return idx;
+            }
             
             let skippedNoGeom = 0;
             let skippedNoType = 0;
@@ -1747,6 +2490,17 @@
                     points = resamplePoints(points, maxPointsPerFeature);
                 }
                 
+                // Extract name from OSM tags (ref takes priority for highways)
+                let featureName = null;
+                if (element.tags) {
+                    if (element.tags.ref && element.tags.name) {
+                        featureName = element.tags.ref + ' ' + element.tags.name;
+                    } else {
+                        featureName = element.tags.ref || element.tags.name || null;
+                    }
+                }
+                const nameIndex = getOrAddName(featureName, featureType);
+                
                 // Calculate feature length for priority sorting
                 let length = 0;
                 for (let i = 1; i < points.length; i++) {
@@ -1758,6 +2512,7 @@
                 features.push({
                     type: featureType,
                     points: points,
+                    nameIndex: nameIndex,
                     priority: typePriority[featureType] || 99,
                     length: length
                 });
@@ -1767,6 +2522,7 @@
             debugLog('CONVERT', 'Skipped - no type match:', skippedNoType);
             debugLog('CONVERT', 'Skipped - too short:', skippedTooShort);
             debugLog('CONVERT', 'Features before trimming:', features.length);
+            debugLog('CONVERT', 'Unique names collected:', nameList.length);
             
             // Sort by priority (important first), then by length (longer = more important)
             features.sort((a, b) => {
@@ -1774,13 +2530,27 @@
                 return b.length - a.length; // Longer roads first within same priority
             });
             
+            // Apply max features limit (drops least important)
+            const maxFeatures = parseInt(document.getElementById('maxFeatures').value);
+            if (features.length > maxFeatures) {
+                debugLog('CONVERT', 'Limiting from', features.length, 'to', maxFeatures, 'features');
+                features = features.slice(0, maxFeatures);
+            }
+            
+            // Calculate name table size
+            let nameTableSize = 0;
+            for (const name of nameList) {
+                nameTableSize += 1 + name.length; // length byte + string bytes
+            }
+            
             // Auto-fit to budget by dropping least important features
+            // v2 feature size: type(1) + nameIndex(2) + pointCount(1) + firstPoint(8) + deltas((n-1)*4)
             let trimmedFeatures = features;
             if (autoFitBudget) {
-                let currentSize = 36; // Header
+                let currentSize = 40 + nameTableSize; // Header + name table
                 trimmedFeatures = [];
                 for (const f of features) {
-                    const featureSize = 2 + 8 + (f.points.length - 1) * 4;
+                    const featureSize = 4 + 8 + (f.points.length - 1) * 4; // type + nameIdx + count + points
                     if (currentSize + featureSize <= budgetBytes) {
                         trimmedFeatures.push(f);
                         currentSize += featureSize;
@@ -1791,44 +2561,80 @@
             
             debugLog('CONVERT', 'Final feature count:', trimmedFeatures.length);
             
+            // Rebuild name table with only names used by trimmed features
+            const usedNameIndices = new Set();
+            for (const f of trimmedFeatures) {
+                if (f.nameIndex !== HWMAP_NO_NAME) {
+                    usedNameIndices.add(f.nameIndex);
+                }
+            }
+            
+            // Create compact name list and remap indices
+            const finalNameList = [];
+            const indexRemap = new Map();
+            for (const oldIdx of Array.from(usedNameIndices).sort((a, b) => a - b)) {
+                indexRemap.set(oldIdx, finalNameList.length);
+                finalNameList.push(nameList[oldIdx]);
+            }
+            
+            // Update feature name indices
+            for (const f of trimmedFeatures) {
+                if (f.nameIndex !== HWMAP_NO_NAME) {
+                    f.nameIndex = indexRemap.get(f.nameIndex);
+                }
+            }
+            
+            debugLog('CONVERT', 'Names after trimming:', finalNameList.length);
+            
             // Log point distribution
             let totalPoints = 0;
             let maxPts = 0;
+            let namedCount = 0;
             for (const f of trimmedFeatures) {
                 totalPoints += f.points.length;
                 if (f.points.length > maxPts) maxPts = f.points.length;
+                if (f.nameIndex !== HWMAP_NO_NAME) namedCount++;
             }
             debugLog('CONVERT', 'Total points:', totalPoints, 'Max points per feature:', maxPts);
+            debugLog('CONVERT', 'Named features:', namedCount, '/', trimmedFeatures.length);
             
             // Update feature count display
             document.getElementById('featureCount').textContent = trimmedFeatures.length;
             
-            // Calculate buffer size
-            // Header: 4 (magic) + 2 (version) + 2 (flags) + 16 (bounds) + 4 (count) + 8 (name) = 36
-            let bufferSize = 36; // Header
+            // Calculate name table size (final)
+            let finalNameTableSize = 0;
+            for (const name of finalNameList) {
+                finalNameTableSize += 1 + name.length;
+            }
+            
+            // Calculate buffer size for v2 format
+            // Header: 4 (magic) + 2 (version) + 2 (flags) + 16 (bounds) + 4 (featureCount) + 2 (nameCount) + 8 (regionName) + 2 (padding) = 40
+            let bufferSize = 40; // Header
+            bufferSize += finalNameTableSize; // Name table
             for (const f of trimmedFeatures) {
-                bufferSize += 2 + 8 + (f.points.length - 1) * 4; // type + count + first point + deltas
+                bufferSize += 4 + 8 + (f.points.length - 1) * 4; // type + nameIdx + count + first point + deltas
             }
             
             debugLog('BUFFER', 'Calculated buffer size:', bufferSize + ' bytes');
+            debugLog('BUFFER', 'Header: 40, Names:', finalNameTableSize, 'Features:', bufferSize - 40 - finalNameTableSize);
             
             // Create buffer
             const buffer = new ArrayBuffer(bufferSize);
             const view = new DataView(buffer);
             let offset = 0;
             
-            // Write header
+            // Write v2 header (40 bytes)
             // Magic "HWMP"
             view.setUint8(offset++, 0x48); // H
             view.setUint8(offset++, 0x57); // W
             view.setUint8(offset++, 0x4D); // M
             view.setUint8(offset++, 0x50); // P
             
-            // Version
-            view.setUint16(offset, 1, true);
+            // Version = 2
+            view.setUint16(offset, 2, true);
             offset += 2;
             
-            // Flags (reserved)
+            // Flags (reserved for future use)
             view.setUint16(offset, 0, true);
             offset += 2;
             
@@ -1846,23 +2652,44 @@
             view.setUint32(offset, trimmedFeatures.length, true);
             offset += 4;
             
+            // Name count (new in v2)
+            view.setUint16(offset, finalNameList.length, true);
+            offset += 2;
+            
             // Region name (null-padded to 8 bytes)
             for (let i = 0; i < 8; i++) {
                 view.setUint8(offset++, i < regionName.length ? regionName.charCodeAt(i) : 0);
             }
             
-            debugLog('BUFFER', 'Header written, offset now:', offset);
+            // Padding to reach 40 bytes
+            view.setUint16(offset, 0, true);
+            offset += 2;
             
-            // Write features
+            debugLog('BUFFER', 'Header written (40 bytes), offset now:', offset);
+            
+            // Write name table
+            for (const name of finalNameList) {
+                view.setUint8(offset++, name.length);
+                for (let i = 0; i < name.length; i++) {
+                    view.setUint8(offset++, name.charCodeAt(i) & 0xFF);
+                }
+            }
+            debugLog('BUFFER', 'Name table written, offset now:', offset);
+            
+            // Write features (v2 format: type + nameIndex + pointCount + points)
             let featureIdx = 0;
             for (const feature of trimmedFeatures) {
                 const featureStartOffset = offset;
-                const expectedSize = 2 + 8 + (feature.points.length - 1) * 4;
+                const expectedSize = 4 + 8 + (feature.points.length - 1) * 4;
                 
-                // Type
+                // Type (1 byte)
                 view.setUint8(offset++, feature.type);
                 
-                // Point count
+                // Name index (2 bytes, 0xFFFF = unnamed)
+                view.setUint16(offset, feature.nameIndex, true);
+                offset += 2;
+                
+                // Point count (1 byte)
                 view.setUint8(offset++, feature.points.length);
                 
                 // First point (absolute, microdegrees)
@@ -1912,6 +2739,10 @@
             }
             
             debugLog('BUFFER', 'All features written, final offset:', offset, 'buffer size:', bufferSize);
+            debugLog('CONVERT', '=== HWMAP v2 generation complete ===');
+            debugLog('CONVERT', 'Final file size:', bufferSize, 'bytes');
+            debugLog('CONVERT', 'Named features:', namedCount, '/', trimmedFeatures.length);
+            debugLog('CONVERT', 'Unique names:', finalNameList.length);
             
             return new Blob([buffer], { type: 'application/octet-stream' });
         }
@@ -2060,6 +2891,95 @@
             document.getElementById('maxPointsValue').textContent = document.getElementById('maxPoints').value + ' pts';
             updateStats();
         });
+        
+        document.getElementById('maxFeatures').addEventListener('input', () => {
+            document.getElementById('maxFeaturesValue').textContent = document.getElementById('maxFeatures').value;
+            updateStats();
+        });
+        
+        // Name detail slider
+        document.getElementById('nameDetail').addEventListener('input', () => {
+            updateNameDetailLabel();
+            updateStats();
+        });
+        
+        function updateNameDetailLabel() {
+            const level = parseInt(document.getElementById('nameDetail').value);
+            const labels = ['None', 'Highways Only', 'Major Roads', 'All Roads', 'Everything'];
+            const descs = [
+                'No names included - smallest file size',
+                'Only highway/motorway names for basic context',
+                'Highways + major roads get names for "where am I" context',
+                'All road types get names for detailed context',
+                'All features including parks, water, railways get names'
+            ];
+            document.getElementById('nameDetailValue').textContent = labels[level];
+            document.getElementById('nameDetailDesc').textContent = descs[level];
+            
+            // Hide/show Map Features panel based on name detail level
+            const featuresPanel = document.getElementById('mapFeaturesPanel');
+            if (featuresPanel) {
+                featuresPanel.style.display = (level === 0) ? 'none' : 'block';
+            }
+            
+            // Update the feature list to show only what will be included
+            updateFilteredFeatureList(level);
+        }
+        
+        function updateFilteredFeatureList(level) {
+            if (!window.extractedMetadata || level === 0) return;
+            
+            const featuresList = document.getElementById('mapFeaturesList');
+            const metadataSizeEl = document.getElementById('metadataSizeEst');
+            if (!featuresList) return;
+            
+            const { namedFeatures } = window.extractedMetadata;
+            let html = '';
+            let totalBytes = 0;
+            let totalCount = 0;
+            
+            const addSection = (title, items, color) => {
+                if (items.length === 0) return;
+                totalCount += items.length;
+                for (const f of items) totalBytes += (f.bytes || 20);
+                
+                html += `<div style="margin-bottom:8px;">`;
+                html += `<div style="color:${color};font-weight:bold;margin-bottom:4px;">${title} (${items.length})</div>`;
+                html += `<div style="color:#aaa;padding-left:8px;">`;
+                const shown = items.slice(0, 10);
+                html += shown.map(f => `<div style="margin:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.label}">${f.label}</div>`).join('');
+                if (items.length > 10) {
+                    html += `<div style="color:#666;font-style:italic;">...and ${items.length - 10} more</div>`;
+                }
+                html += `</div></div>`;
+            };
+            
+            // Level 1: Highways only
+            // Level 2: Highways + major roads  
+            // Level 3: All roads
+            // Level 4: Everything
+            
+            if (level >= 1) addSection('Highways', namedFeatures.highways || [], '#ff6b6b');
+            if (level >= 2) addSection('Roads', namedFeatures.roads || [], '#ffd93d');
+            if (level >= 4) {
+                addSection('Water', namedFeatures.water || [], '#4dabf7');
+                addSection('Parks', namedFeatures.parks || [], '#69db7c');
+                addSection('Railways', namedFeatures.railways || [], '#da77f2');
+            }
+            
+            featuresList.innerHTML = html || '<div style="color:#666;font-style:italic;">No features match current filter</div>';
+            
+            // Update size estimate
+            if (metadataSizeEl && totalCount > 0) {
+                const overhead = totalCount * 4 + totalBytes;
+                metadataSizeEl.textContent = `+${(overhead / 1024).toFixed(1)} KB`;
+            } else if (metadataSizeEl) {
+                metadataSizeEl.textContent = '';
+            }
+        }
+        
+        // Initialize label
+        updateNameDetailLabel();
     </script>
 </body>
 </html>
