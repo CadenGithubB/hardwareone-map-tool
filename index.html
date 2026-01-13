@@ -653,7 +653,7 @@
                 </div>
                 <div class="preview-panel" id="previewPanel">
                     <div class="preview-header">
-                        <h3>Preview - How it will look on device</h3>
+                        <h3>Preview</h3>
                         <button class="preview-close" onclick="closePreview()">✕</button>
                     </div>
                     <div class="preview-canvas-container" id="previewContainer">
@@ -804,17 +804,17 @@
                             <input type="checkbox" id="powerlines" onchange="updateSectionCounts()">
                             Power Lines <span class="feature-size" id="size-powerlines"></span>
                         </label>
-                    </div>
-                    
-                    <div class="section-title collapsed" onclick="toggleSection(this)" data-section="landuse" style="font-size:0.9em;">Land Use <span class="section-count" id="countLanduse">(0/5)</span></div>
-                    <div class="section-content collapsed">
                         <label class="checkbox-item">
-                            <input type="checkbox" id="buildings" onchange="updateSectionCounts()">
+                            <input type="checkbox" id="buildings" onchange="updateSectionCounts(); updateBuildingSubOptions();">
                             Buildings <span class="feature-size" id="size-buildings"></span>
                         </label>
-                        <label class="checkbox-item" style="grid-column: span 2; font-size: 0.85em; padding-left: 20px;">
-                            <input type="checkbox" id="buildingsLargeOnly" onchange="updateSectionCounts()">
+                        <label class="checkbox-item building-sub-option" id="buildingsLargeOnlyLabel" style="grid-column: span 2; font-size: 0.85em; padding-left: 20px; opacity: 0.4;">
+                            <input type="checkbox" id="buildingsLargeOnly" onchange="updateSectionCounts()" disabled>
                             Large only <span class="feature-size" id="size-buildingsLargeOnly"></span>
+                        </label>
+                        <label class="checkbox-item building-sub-option" id="buildingNamesLabel" style="grid-column: span 2; font-size: 0.85em; padding-left: 20px; opacity: 0.4;">
+                            <input type="checkbox" id="buildingNames" onchange="updateSectionCounts()" disabled>
+                            Include names
                         </label>
                         <label class="checkbox-item">
                             <input type="checkbox" id="industrial" onchange="updateSectionCounts()">
@@ -854,26 +854,10 @@
                     
                     <div class="slider-group" style="margin-bottom:12px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                            <label style="font-size:0.85em;color:#aaa;">Target Size Budget</label>
-                            <span class="slider-value" id="budgetValue" style="font-size:0.85em;color:#4cc9f0;">500 KB</span>
-                        </div>
-                        <input type="range" id="sizeBudget" min="50" max="25000" step="50" value="500" style="width:100%;">
-                        <div class="size-bar" style="margin-top:6px;">
-                            <div class="size-bar-fill" id="sizeBarFill"></div>
-                        </div>
-                    </div>
-                    
-                    <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;gap:6px;">
-                        <input type="checkbox" id="autoFitBudget" checked>
-                        <span>Auto-trim to fit budget</span>
-                    </label>
-                    
-                    <div class="slider-group" style="margin-top:12px;margin-bottom:12px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                             <label style="font-size:0.85em;color:#aaa;">Max Features</label>
-                            <span class="slider-value" id="maxFeaturesValue" style="font-size:0.85em;color:#4cc9f0;">5000</span>
+                            <span class="slider-value" id="maxFeaturesValue" style="font-size:0.85em;color:#4cc9f0;">20000</span>
                         </div>
-                        <input type="range" id="maxFeatures" min="500" max="20000" step="500" value="5000" style="width:100%;">
+                        <input type="range" id="maxFeatures" min="100" max="20000" step="100" value="20000" style="width:100%;">
                         <div style="font-size:0.7em;color:#666;margin-top:4px;">
                             Limit total features (drops least important first)
                         </div>
@@ -889,6 +873,56 @@
                             Highways + major roads get names for "where am I" context
                         </div>
                     </div>
+                    
+                    <div style="margin:16px 0 12px 0;padding-top:12px;border-top:1px solid #333;">
+                        <div style="font-size:0.85em;color:#aaa;margin-bottom:8px;font-weight:bold;">Geometry Simplification</div>
+                        <div style="font-size:0.7em;color:#666;margin-bottom:8px;">Reduce file size by simplifying complex shapes (recommended for memory-constrained devices)</div>
+                        <div style="font-size:0.65em;color:#888;margin-bottom:8px;font-style:italic;">Note: Preview shows original OSM data. Simplification is applied during map generation.</div>
+                        <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="checkbox" id="simplifyBuildings" onchange="updateStats()">
+                                <span>Buildings (rectangles only)</span>
+                            </div>
+                            <span id="simplifyBuildingsSavings" style="font-size:0.8em;color:#69db7c;"></span>
+                        </label>
+                        <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="checkbox" id="simplifyResidential" onchange="updateStats()">
+                                <span>Residential roads (straighter lines)</span>
+                            </div>
+                            <span id="simplifyResidentialSavings" style="font-size:0.8em;color:#69db7c;"></span>
+                        </label>
+                        <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="checkbox" id="simplifyWater" onchange="updateStats()">
+                                <span>Water bodies (simpler outlines)</span>
+                            </div>
+                            <span id="simplifyWaterSavings" style="font-size:0.8em;color:#69db7c;"></span>
+                        </label>
+                        <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="checkbox" id="simplifyParks" onchange="updateStats()">
+                                <span>Parks & nature (simpler boundaries)</span>
+                            </div>
+                            <span id="simplifyParksSavings" style="font-size:0.8em;color:#69db7c;"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="slider-group" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                            <label style="font-size:0.85em;color:#aaa;">Target Size Budget</label>
+                            <span class="slider-value" id="budgetValue" style="font-size:0.85em;color:#4cc9f0;">500 KB</span>
+                        </div>
+                        <input type="range" id="sizeBudget" min="50" max="25000" step="50" value="500" style="width:100%;">
+                        <div class="size-bar" style="margin-top:6px;">
+                            <div class="size-bar-fill" id="sizeBarFill"></div>
+                        </div>
+                    </div>
+                    
+                    <label class="checkbox-item" style="font-size:0.85em;display:flex;align-items:center;gap:6px;margin-bottom:0;">
+                        <input type="checkbox" id="autoFitBudget">
+                        <span>Auto-trim to fit budget</span>
+                    </label>
                 </div>
                 
                 <div class="size-warning" id="sizeWarning">
@@ -915,12 +949,44 @@
                     <div id="breakdownContent"></div>
                 </div>
                 
+                <div id="actualResults" class="size-breakdown" style="display:none;margin-top:10px;padding:8px;background:#1a2e1a;border:1px solid #69db7c;border-radius:4px;font-size:0.8em;">
+                    <div style="color:#69db7c;margin-bottom:8px;font-weight:bold;display:flex;align-items:center;gap:4px;">
+                        <span>✓</span>
+                        <span>Generated Map File</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;color:#ddd;">
+                        <span style="color:#888;">File Size:</span>
+                        <span id="actualFileSize" style="color:#69db7c;font-weight:bold;">--</span>
+                        
+                        <span style="color:#888;">Features:</span>
+                        <span id="actualFeatureCount">--</span>
+                        
+                        <span style="color:#888;">Named Features:</span>
+                        <span id="actualNamedCount">--</span>
+                        
+                        <span style="color:#888;">Unique Names:</span>
+                        <span id="actualNameCount">--</span>
+                        
+                        <span style="color:#888;">Total Points:</span>
+                        <span id="actualPointCount">--</span>
+                        
+                        <span style="color:#888;">Max Points/Feature:</span>
+                        <span id="actualMaxPoints">--</span>
+                    </div>
+                    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2a5a2a;">
+                        <div style="color:#888;margin-bottom:4px;font-size:0.9em;">Size by Type:</div>
+                        <div id="actualBreakdown"></div>
+                    </div>
+                </div>
+                
                 <div id="mapFeaturesPanel" style="display:none;margin-top:10px;margin-bottom:12px;padding:10px;background:#1a1a2e;border-radius:4px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <span style="color:#4cc9f0;font-size:0.9em;font-weight:bold;">Map Features</span>
+                        <span style="color:#4cc9f0;font-size:0.9em;font-weight:bold;">Names Found</span>
                         <span id="metadataSizeEst" style="font-size:0.75em;color:#888;"></span>
                     </div>
                     <div id="mapFeaturesList" style="font-size:0.8em;max-height:200px;overflow-y:auto;"></div>
+                    <div id="nameSummary" style="margin-top:8px;padding-top:8px;border-top:1px solid #333;font-size:0.75em;color:#888;"></div>
+                    <div id="buildingNameSummary" style="margin-top:4px;font-size:0.75em;color:#b197fc;"></div>
                 </div>
                 
                 <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
@@ -977,15 +1043,21 @@
             draw: {
                 rectangle: {
                     shapeOptions: {
-                        color: '#4cc9f0',
-                        fillOpacity: 0.2
+                        color: '#ff6b35',
+                        weight: 5,
+                        fillOpacity: 0.25,
+                        fillColor: '#ffd93d',
+                        dashArray: '10, 5'
                     }
                 },
                 polygon: {
                     allowIntersection: false,
                     shapeOptions: {
-                        color: '#4cc9f0',
-                        fillOpacity: 0.2
+                        color: '#ff6b35',
+                        weight: 5,
+                        fillOpacity: 0.25,
+                        fillColor: '#ffd93d',
+                        dashArray: '10, 5'
                     },
                     showArea: true,
                     metric: true
@@ -1312,6 +1384,60 @@
             }, AUTO_PREVIEW_DEBOUNCE_MS);
         }
         
+        function updateSimplificationStates() {
+            // Map simplification checkboxes to their corresponding feature checkboxes
+            const simplifyMapping = {
+                simplifyBuildings: ['buildings', 'buildingsLargeOnly'],
+                simplifyResidential: ['residentialRoads'],
+                simplifyWater: ['waterBodies', 'waterways', 'coastlines'],
+                simplifyParks: ['parks', 'forests', 'grassland']
+            };
+            
+            for (const [simplifyId, featureIds] of Object.entries(simplifyMapping)) {
+                const simplifyCheckbox = document.getElementById(simplifyId);
+                if (!simplifyCheckbox) continue;
+                
+                // Check if ANY of the related features are checked
+                const anyFeatureChecked = featureIds.some(id => document.getElementById(id)?.checked);
+                
+                // Enable/disable and style accordingly
+                simplifyCheckbox.disabled = !anyFeatureChecked;
+                const label = simplifyCheckbox.closest('label');
+                if (label) {
+                    if (anyFeatureChecked) {
+                        label.style.opacity = '1';
+                        label.style.cursor = 'pointer';
+                    } else {
+                        label.style.opacity = '0.4';
+                        label.style.cursor = 'not-allowed';
+                        // Uncheck if disabled
+                        simplifyCheckbox.checked = false;
+                    }
+                }
+            }
+        }
+        
+        function updateBuildingSubOptions() {
+            const buildingsChecked = document.getElementById('buildings')?.checked;
+            const largeOnlyLabel = document.getElementById('buildingsLargeOnlyLabel');
+            const largeOnlyCheckbox = document.getElementById('buildingsLargeOnly');
+            const namesLabel = document.getElementById('buildingNamesLabel');
+            const namesCheckbox = document.getElementById('buildingNames');
+            
+            if (largeOnlyLabel && largeOnlyCheckbox) {
+                largeOnlyCheckbox.disabled = !buildingsChecked;
+                largeOnlyLabel.style.opacity = buildingsChecked ? '1' : '0.4';
+                largeOnlyLabel.style.cursor = buildingsChecked ? 'pointer' : 'not-allowed';
+                if (!buildingsChecked) largeOnlyCheckbox.checked = false;
+            }
+            if (namesLabel && namesCheckbox) {
+                namesCheckbox.disabled = !buildingsChecked;
+                namesLabel.style.opacity = buildingsChecked ? '1' : '0.4';
+                namesLabel.style.cursor = buildingsChecked ? 'pointer' : 'not-allowed';
+                if (!buildingsChecked) namesCheckbox.checked = false;
+            }
+        }
+        
         function updateSectionCounts() {
             const sections = {
                 highways: ['motorways', 'trunkRoads'],
@@ -1319,8 +1445,7 @@
                 paths: ['footways', 'cycleways', 'tracks'],
                 water: ['waterBodies', 'waterways', 'coastlines'],
                 nature: ['parks', 'forests', 'grassland'],
-                infrastructure: ['railways', 'subways', 'bridges', 'powerlines'],
-                landuse: ['buildings', 'buildingsLargeOnly', 'industrial', 'commercial', 'residential']
+                infrastructure: ['railways', 'subways', 'bridges', 'powerlines', 'buildings', 'buildingsLargeOnly', 'industrial', 'commercial', 'residential']
             };
             
             for (const [section, ids] of Object.entries(sections)) {
@@ -1332,6 +1457,9 @@
                 }
             }
             
+            // Update simplification checkbox states
+            updateSimplificationStates();
+            
             // Also update stats when checkboxes change
             if (selectedBounds) {
                 updateStats();
@@ -1339,6 +1467,47 @@
             
             // Trigger auto-preview if enabled
             triggerAutoPreview();
+        }
+        
+        function displayActualResults(result) {
+            const { stats } = result;
+            
+            // Show the results panel
+            document.getElementById('actualResults').style.display = 'block';
+            
+            // Format file size
+            let sizeText;
+            if (stats.fileSize >= 1024 * 1024) {
+                sizeText = (stats.fileSize / (1024 * 1024)).toFixed(2) + ' MB';
+            } else {
+                sizeText = (stats.fileSize / 1024).toFixed(1) + ' KB';
+            }
+            
+            // Update all fields
+            document.getElementById('actualFileSize').textContent = sizeText;
+            document.getElementById('actualFeatureCount').textContent = stats.featureCount.toLocaleString();
+            document.getElementById('actualNamedCount').textContent = stats.namedCount.toLocaleString();
+            document.getElementById('actualNameCount').textContent = stats.nameCount.toLocaleString();
+            document.getElementById('actualPointCount').textContent = stats.totalPoints.toLocaleString();
+            document.getElementById('actualMaxPoints').textContent = stats.maxPoints;
+            
+            // Build type breakdown HTML
+            let breakdownHtml = '';
+            if (stats.typeBreakdown) {
+                // Sort by bytes descending
+                const sorted = Object.entries(stats.typeBreakdown).sort((a, b) => b[1].bytes - a[1].bytes);
+                for (const [typeName, data] of sorted) {
+                    const kb = (data.bytes / 1024).toFixed(1);
+                    const color = data.bytes > 50000 ? '#ff6b6b' : data.bytes > 20000 ? '#ffd93d' : '#69db7c';
+                    breakdownHtml += `<div style="display:flex;justify-content:space-between;"><span>${typeName} <span style="color:#666;">(${data.count.toLocaleString()})</span></span><span style="color:${color}">${kb} KB</span></div>`;
+                }
+                // Add name table
+                if (stats.nameTableSize > 0) {
+                    const nameKb = (stats.nameTableSize / 1024).toFixed(1);
+                    breakdownHtml += `<div style="display:flex;justify-content:space-between;margin-top:4px;border-top:1px solid #333;padding-top:4px;"><span style="color:#b197fc;">Name Table</span><span style="color:#b197fc;">${nameKb} KB</span></div>`;
+                }
+            }
+            document.getElementById('actualBreakdown').innerHTML = breakdownHtml;
         }
         
         function clearSelection() {
@@ -1349,6 +1518,7 @@
             document.getElementById('generateBtn').disabled = true;
             document.getElementById('previewBtn').disabled = true;
             document.getElementById('clearBtn').style.display = 'none';
+            document.getElementById('actualResults').style.display = 'none';
             setStatus('ready', 'Draw a shape on the map to select area');
             clearStats();
         }
@@ -1431,8 +1601,13 @@
             // Update size warning
             updateSizeWarning(estKB);
             
-            // Feature count will be updated after fetch
-            document.getElementById('featureCount').textContent = '~' + Math.round(areaKm2 * 50);
+            // Feature count - cap by max features limit
+            const maxFeaturesLimit = parseInt(document.getElementById('maxFeatures').value);
+            const rawEstimate = Math.round(areaKm2 * 50);
+            const cappedEstimate = Math.min(rawEstimate, maxFeaturesLimit);
+            document.getElementById('featureCount').textContent = rawEstimate > maxFeaturesLimit 
+                ? `~${cappedEstimate} (limited)` 
+                : `~${cappedEstimate}`;
         }
         
         function clearStats() {
@@ -1456,103 +1631,203 @@
             const detailLevel = parseInt(document.getElementById('detailLevel').value);
             const maxPoints = parseInt(document.getElementById('maxPoints').value);
             const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
+            const maxFeaturesLimit = parseInt(document.getElementById('maxFeatures').value);
             const detailMultiplier = [0.4, 0.6, 1.0, 1.5, 2.0][detailLevel - 1];
             
-            // Name overhead: avg ~20 bytes per name + 2 bytes per feature for nameIndex
-            // Level 0: no names, Level 1: ~5% features, Level 2: ~15%, Level 3: ~40%, Level 4: ~60%
-            const namePercent = [0, 0.05, 0.15, 0.40, 0.60][nameDetailLevel];
-            const avgNameLen = 18; // Average name length in bytes
+            // Name overhead percentages by level
+            const namePercent = [0, 0.05, 0.15, 0.40, 0.80][nameDetailLevel];
+            const avgNameLen = 18;
             
-            // Size estimates per km² for each feature type (base values, avgPoints)
-            const estimates = [
-                // Highways
-                { id: 'motorways', name: 'Motorways', base: 2000, avgPts: 35 },
-                { id: 'trunkRoads', name: 'Trunk Roads', base: 3000, avgPts: 30 },
-                // Roads
-                { id: 'primaryRoads', name: 'Primary Roads', base: 5000, avgPts: 25 },
-                { id: 'secondaryRoads', name: 'Secondary Roads', base: 8000, avgPts: 20 },
-                { id: 'tertiaryRoads', name: 'Tertiary Roads', base: 12000, avgPts: 15 },
-                { id: 'residentialRoads', name: 'Residential', base: 25000, avgPts: 10 },
-                { id: 'serviceRoads', name: 'Service Roads', base: 15000, avgPts: 8 },
-                // Paths
-                { id: 'footways', name: 'Footways', base: 10000, avgPts: 10 },
-                { id: 'cycleways', name: 'Cycleways', base: 5000, avgPts: 15 },
-                { id: 'tracks', name: 'Tracks', base: 8000, avgPts: 12 },
-                // Water
-                { id: 'waterBodies', name: 'Lakes/Ponds', base: 5000, avgPts: 25 },
-                { id: 'waterways', name: 'Rivers', base: 4000, avgPts: 20 },
-                { id: 'coastlines', name: 'Coastlines', base: 6000, avgPts: 30 },
-                // Nature
-                { id: 'parks', name: 'Parks', base: 3000, avgPts: 20 },
-                { id: 'forests', name: 'Forests', base: 4000, avgPts: 25 },
-                { id: 'grassland', name: 'Grassland', base: 3500, avgPts: 20 },
-                // Infrastructure
-                { id: 'railways', name: 'Railways', base: 3000, avgPts: 25 },
-                { id: 'subways', name: 'Subways', base: 4000, avgPts: 30 },
-                { id: 'bridges', name: 'Bridges', base: 1500, avgPts: 15 },
-                { id: 'powerlines', name: 'Power Lines', base: 4000, avgPts: 20 },
-                // Land Use
-                { id: 'buildings', name: 'Buildings', base: 80000, avgPts: 8 },
-                { id: 'buildingsLargeOnly', name: 'Buildings (Large)', base: 8000, avgPts: 12 },
-                { id: 'industrial', name: 'Industrial', base: 2000, avgPts: 15 },
-                { id: 'commercial', name: 'Commercial', base: 2500, avgPts: 15 },
-                { id: 'residential', name: 'Residential Areas', base: 3000, avgPts: 15 }
-            ];
+            // Binary format: 13 bytes base + (avgPts-1)*4 for deltas
+            // With maxPoints limiting, avgPts is typically ~2 for maxPoints=5
+            const avgPtsActual = Math.max(2, Math.min(maxPoints, 3)); // Most features end up with 2-3 points after limiting
+            const bytesPerFeature = 13 + (avgPtsActual - 1) * 4; // ~17 bytes for maxPoints=5
             
-            let totalBytes = 0;
+            // Feature type density per km² (independent estimates) - calibrated to match actual output
+            const featureDensity = {
+                motorways: { density: 1, name: 'Motorways' },
+                trunkRoads: { density: 3, name: 'Trunk Roads' },
+                primaryRoads: { density: 8, name: 'Primary Roads' },
+                secondaryRoads: { density: 15, name: 'Secondary Roads' },
+                tertiaryRoads: { density: 30, name: 'Tertiary Roads' },
+                serviceRoads: { density: 60, name: 'Service Roads' },
+                footways: { density: 45, name: 'Footways' },
+                cycleways: { density: 15, name: 'Cycleways' },
+                tracks: { density: 25, name: 'Tracks' },
+                waterBodies: { density: 6, name: 'Lakes/Ponds', simplifyCheckbox: 'simplifyWater' },
+                waterways: { density: 10, name: 'Rivers', simplifyCheckbox: 'simplifyWater' },
+                coastlines: { density: 3, name: 'Coastlines', simplifyCheckbox: 'simplifyWater' },
+                parks: { density: 10, name: 'Parks', simplifyCheckbox: 'simplifyParks' },
+                forests: { density: 6, name: 'Forests', simplifyCheckbox: 'simplifyParks' },
+                grassland: { density: 6, name: 'Grassland', simplifyCheckbox: 'simplifyParks' },
+                railways: { density: 6, name: 'Railways' },
+                subways: { density: 10, name: 'Subways' },
+                bridges: { density: 3, name: 'Bridges' },
+                powerlines: { density: 10, name: 'Power Lines' },
+                buildings: { density: 300, name: 'Buildings', simplifyCheckbox: 'simplifyBuildings' },
+                buildingsLargeOnly: { density: 30, name: 'Buildings (Large)', simplifyCheckbox: 'simplifyBuildings' },
+                residentialRoads: { density: 120, name: 'Residential', simplifyCheckbox: 'simplifyResidential' },
+                industrial: { density: 6, name: 'Industrial' },
+                commercial: { density: 6, name: 'Commercial' },
+                residential: { density: 6, name: 'Residential Areas' }
+            };
+            
+            // Calculate bytes for each feature type independently
             let breakdownHtml = '';
+            let totalBytes = 0;
+            let totalFeatures = 0;
+            const simplifySavings = {
+                simplifyBuildings: 0,
+                simplifyResidential: 0,
+                simplifyWater: 0,
+                simplifyParks: 0
+            };
             
-            for (const est of estimates) {
-                const el = document.getElementById(est.id);
-                const sizeEl = document.getElementById('size-' + est.id);
+            for (const [id, info] of Object.entries(featureDensity)) {
+                const el = document.getElementById(id);
+                const sizeEl = document.getElementById('size-' + id);
                 
-                // Calculate size for this feature (even if unchecked, for display)
-                const ptsScale = Math.min(1.0, maxPoints / est.avgPts);
-                const bytes = Math.round(areaKm2 * est.base * detailMultiplier * ptsScale);
-                const kb = Math.round(bytes / 1024);
+                // Calculate feature count for this type based on area and density
+                const featureCount = Math.round(areaKm2 * info.density * detailMultiplier);
+                let featureBytes = featureCount * bytesPerFeature;
                 
-                // Update inline size indicator
+                // Track simplification savings (always calculate for display)
+                if (info.simplifyCheckbox) {
+                    const simplifyChecked = document.getElementById(info.simplifyCheckbox)?.checked;
+                    const unsimplifiedBytes = featureBytes;
+                    if (simplifyChecked) {
+                        const reductionFactor = (info.simplifyCheckbox === 'simplifyWater' || info.simplifyCheckbox === 'simplifyParks') ? 0.7 : 0.5;
+                        featureBytes = Math.round(featureBytes * reductionFactor);
+                    }
+                    // Calculate potential savings for this feature type
+                    if (el && el.checked) {
+                        const potentialSavings = Math.round(unsimplifiedBytes * (info.simplifyCheckbox === 'simplifyWater' || info.simplifyCheckbox === 'simplifyParks' ? 0.3 : 0.5));
+                        simplifySavings[info.simplifyCheckbox] += potentialSavings;
+                    }
+                }
+                
+                const kb = Math.round(featureBytes / 1024);
+                
+                // Update inline size indicator (always, for all features)
                 if (sizeEl && areaKm2 > 0) {
-                    const sizeClass = kb > 200 ? 'large' : kb > 100 ? 'medium' : 'small';
+                    const sizeClass = kb > 50 ? 'large' : kb > 20 ? 'medium' : 'small';
                     sizeEl.textContent = kb > 0 ? `(${kb}KB)` : '';
                     sizeEl.className = 'feature-size ' + sizeClass;
                 } else if (sizeEl) {
                     sizeEl.textContent = '';
                 }
                 
-                // Add to total if checked
+                // Add to total only if checked
                 if (el && el.checked) {
-                    totalBytes += bytes;
+                    totalBytes += featureBytes;
+                    totalFeatures += featureCount;
+                    
                     if (kb > 0) {
-                        const color = kb > 200 ? '#ff6b6b' : kb > 100 ? '#ffd93d' : '#69db7c';
-                        breakdownHtml += '<div style="display:flex;justify-content:space-between;"><span>' + est.name + '</span><span style="color:' + color + '">' + kb + ' KB</span></div>';
+                        const color = kb > 50 ? '#ff6b6b' : kb > 20 ? '#ffd93d' : '#69db7c';
+                        breakdownHtml += `<div style="display:flex;justify-content:space-between;"><span>${info.name}</span><span style="color:${color}">${kb} KB</span></div>`;
+                        
+                        // Add building names sub-item
+                        if ((id === 'buildings' || id === 'buildingsLargeOnly') && document.getElementById('buildingNames')?.checked) {
+                            if (window.extractedMetadata?.namedFeatures?.buildings) {
+                                let nameBytes = 0;
+                                for (const f of window.extractedMetadata.namedFeatures.buildings) nameBytes += (f.bytes || 20);
+                                const nameKB = (nameBytes / 1024).toFixed(1);
+                                if (nameBytes > 0) {
+                                    breakdownHtml += `<div style="display:flex;justify-content:space-between;padding-left:12px;"><span style="color:#b197fc;">+ names</span><span style="color:#b197fc;">${nameKB} KB</span></div>`;
+                                }
+                            } else {
+                                breakdownHtml += '<div style="display:flex;justify-content:space-between;padding-left:12px;"><span style="color:#888;">+ names</span><span style="color:#888;">preview to see</span></div>';
+                            }
+                        }
                     }
                 }
             }
             
-            // Add name overhead based on name detail level
-            // Each feature gets +2 bytes for nameIndex, plus avg name length for named features
-            const estFeatures = Math.round(areaKm2 * 50 * detailMultiplier);
-            const nameOverhead = estFeatures * 2 + // nameIndex for all features
-                                 Math.round(estFeatures * namePercent * avgNameLen); // name table
-            totalBytes += nameOverhead;
+            // Apply max features limit - scale down if over limit
+            let estFeatures = totalFeatures;
+            let scale = 1;
+            if (estFeatures > maxFeaturesLimit) {
+                scale = maxFeaturesLimit / estFeatures;
+                totalBytes = Math.round(totalBytes * scale);
+                // Scale savings too
+                for (const key of Object.keys(simplifySavings)) {
+                    simplifySavings[key] = Math.round(simplifySavings[key] * scale);
+                }
+                estFeatures = maxFeaturesLimit;
+            }
             
-            // Add to breakdown if names enabled
-            if (namePercent > 0 && areaKm2 > 0) {
-                const nameKB = Math.round(nameOverhead / 1024);
-                if (nameKB > 0) {
-                    breakdownHtml += '<div style="display:flex;justify-content:space-between;"><span>Feature Names</span><span style="color:#4cc9f0">' + nameKB + ' KB</span></div>';
+            // Add name table overhead
+            const estNamedFeatures = Math.round(estFeatures * namePercent);
+            const estUniqueNames = Math.round(estNamedFeatures * 0.15); // ~15% unique names among named features
+            const nameTableBytes = estUniqueNames * (avgNameLen + 1);
+            const nameIndexBytes = estFeatures * 2;
+            totalBytes += nameTableBytes + nameIndexBytes;
+            
+            // Scale breakdown values if limited
+            let scaledBreakdownHtml = '';
+            if (breakdownHtml && areaKm2 > 0) {
+                // Parse the breakdown HTML and scale values
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = breakdownHtml;
+                const rows = tempDiv.querySelectorAll('div[style*="display:flex"]');
+                
+                for (const row of rows) {
+                    const spans = row.querySelectorAll('span');
+                    if (spans.length === 2) {
+                        const name = spans[0].textContent;
+                        const sizeText = spans[1].textContent;
+                        const kb = parseFloat(sizeText);
+                        if (!isNaN(kb)) {
+                            const scaledKb = Math.round(kb * scale);
+                            const color = scaledKb > 50 ? '#ff6b6b' : scaledKb > 20 ? '#ffd93d' : '#69db7c';
+                            scaledBreakdownHtml += `<div style="display:flex;justify-content:space-between;"><span>${name}</span><span style="color:${color}">${scaledKb} KB</span></div>`;
+                        } else {
+                            scaledBreakdownHtml += `<div style="display:flex;justify-content:space-between;"><span>${name}</span><span>${sizeText}</span></div>`;
+                        }
+                    }
                 }
             }
             
             // Show breakdown
             const breakdownDiv = document.getElementById('sizeBreakdown');
             const contentDiv = document.getElementById('breakdownContent');
-            if (breakdownHtml && areaKm2 > 0) {
-                contentDiv.innerHTML = breakdownHtml;
+            if (scaledBreakdownHtml && areaKm2 > 0) {
+                contentDiv.innerHTML = scaledBreakdownHtml;
                 breakdownDiv.style.display = 'block';
             } else {
                 breakdownDiv.style.display = 'none';
+            }
+            
+            // Update simplification savings displays - show potential savings even when unchecked
+            const simplifyMapping = {
+                simplifyBuildings: ['buildings', 'buildingsLargeOnly'],
+                simplifyResidential: ['residentialRoads'],
+                simplifyWater: ['waterBodies', 'waterways', 'coastlines'],
+                simplifyParks: ['parks', 'forests', 'grassland']
+            };
+            
+            for (const [checkboxId, savingsBytes] of Object.entries(simplifySavings)) {
+                const savingsEl = document.getElementById(checkboxId + 'Savings');
+                const checkbox = document.getElementById(checkboxId);
+                if (savingsEl && checkbox) {
+                    // Check if any related features are checked
+                    const featureIds = simplifyMapping[checkboxId] || [];
+                    const anyFeatureChecked = featureIds.some(id => document.getElementById(id)?.checked);
+                    
+                    if (anyFeatureChecked && savingsBytes > 0) {
+                        const savingsKB = Math.round(savingsBytes / 1024);
+                        // Show in gray if not checked, green if checked
+                        if (checkbox.checked) {
+                            savingsEl.textContent = `-${savingsKB} KB`;
+                            savingsEl.style.color = '#69db7c';
+                        } else {
+                            savingsEl.textContent = `save ${savingsKB} KB`;
+                            savingsEl.style.color = '#888';
+                        }
+                    } else {
+                        savingsEl.textContent = '';
+                    }
+                }
             }
             
             return Math.round(totalBytes / 1024);
@@ -1787,6 +2062,94 @@
             
             console.log('Features rendered:', featureCount);
             
+            // Draw text labels for named features (buildings, roads) with collision avoidance
+            const buildingNamesChecked = document.getElementById('buildingNames')?.checked;
+            const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
+            
+            if (buildingNamesChecked || nameDetailLevel > 0) {
+                const labelRects = []; // Track placed labels to avoid overlap
+                const minZoomForLabels = 5.0; // Only show labels when zoomed in enough
+                
+                // Font size scales slightly with zoom but caps out
+                const baseFontSize = Math.min(12, 8 + window.previewZoom);
+                ctx.font = `${baseFontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Check if a new label would overlap existing ones
+                function wouldOverlap(x, y, width, height) {
+                    const padding = 4;
+                    const newRect = { 
+                        x: x - width/2 - padding, 
+                        y: y - height/2 - padding, 
+                        w: width + padding*2, 
+                        h: height + padding*2 
+                    };
+                    for (const rect of labelRects) {
+                        if (newRect.x < rect.x + rect.w && newRect.x + newRect.w > rect.x &&
+                            newRect.y < rect.y + rect.h && newRect.y + newRect.h > rect.y) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                
+                // Only render labels if zoomed in enough
+                if (window.previewZoom >= minZoomForLabels) {
+                    for (const element of window.previewData.elements) {
+                        if (element.type !== 'way' || !element.geometry || !element.tags) continue;
+                        
+                        const name = element.tags.name;
+                        if (!name) continue;
+                        
+                        // Check if this feature type should show labels
+                        const isBuilding = element.tags.building;
+                        const isRoad = element.tags.highway;
+                        
+                        if (isBuilding && !buildingNamesChecked) continue;
+                        if (isRoad && nameDetailLevel === 0) continue;
+                        
+                        // Calculate centroid of the feature
+                        let sumLon = 0, sumLat = 0, count = 0;
+                        for (const p of element.geometry) {
+                            if (inSelection(p.lon, p.lat)) {
+                                sumLon += p.lon;
+                                sumLat += p.lat;
+                                count++;
+                            }
+                        }
+                        if (count === 0) continue;
+                        
+                        const cx = toCanvasX(sumLon / count);
+                        const cy = toCanvasY(sumLat / count);
+                        
+                        // Skip if centroid is outside canvas
+                        if (cx < 0 || cx > canvas.width || cy < 0 || cy > canvas.height) continue;
+                        
+                        // Truncate long names
+                        const displayName = name.length > 20 ? name.substring(0, 18) + '...' : name;
+                        const textWidth = ctx.measureText(displayName).width;
+                        const textHeight = baseFontSize;
+                        
+                        // Skip if would overlap
+                        if (wouldOverlap(cx, cy, textWidth, textHeight)) continue;
+                        
+                        // Draw label with background
+                        const bgColor = isBuilding ? 'rgba(177, 151, 252, 0.85)' : 'rgba(255, 217, 61, 0.85)';
+                        ctx.fillStyle = bgColor;
+                        ctx.fillRect(cx - textWidth/2 - 3, cy - textHeight/2 - 2, textWidth + 6, textHeight + 4);
+                        
+                        ctx.fillStyle = '#000';
+                        ctx.fillText(displayName, cx, cy);
+                        
+                        // Record this label's position
+                        labelRects.push({ x: cx - textWidth/2, y: cy - textHeight/2, w: textWidth, h: textHeight });
+                    }
+                }
+                
+                console.log('Labels rendered:', labelRects.length);
+            }
+            
             // Draw bounds border (cyan) to show exact clip region
             ctx.strokeStyle = '#4cc9f0';
             ctx.lineWidth = 2;
@@ -1805,7 +2168,7 @@
         function zoomPreview(factor) {
             if (!window.previewData) return;
             window.previewZoom *= factor;
-            window.previewZoom = Math.max(0.5, Math.min(5.0, window.previewZoom)); // Limit 0.5x to 5x
+            window.previewZoom = Math.max(0.5, Math.min(20.0, window.previewZoom)); // Limit 0.5x to 20x
             renderPreview();
         }
         
@@ -1851,14 +2214,185 @@
                 isDragging = false;
             });
             
-            // Mouse wheel zoom
+            // Mouse wheel zoom with cursor tracking
             container.addEventListener('wheel', (e) => {
                 if (!window.previewData) return;
                 e.preventDefault();
+                
+                const canvas = document.getElementById('previewCanvas');
+                const rect = canvas.getBoundingClientRect();
+                
+                // Get mouse position relative to canvas center
+                const mouseX = e.clientX - rect.left - rect.width / 2;
+                const mouseY = e.clientY - rect.top - rect.height / 2;
+                
+                // Calculate zoom factor
                 const factor = e.deltaY < 0 ? 1.1 : 0.9;
-                zoomPreview(factor);
+                const oldZoom = window.previewZoom;
+                const newZoom = Math.max(0.5, Math.min(20.0, oldZoom * factor));
+                
+                // Adjust pan to keep mouse position stable
+                if (newZoom !== oldZoom) {
+                    const zoomRatio = newZoom / oldZoom;
+                    window.previewPanX = mouseX + (window.previewPanX - mouseX) * zoomRatio;
+                    window.previewPanY = mouseY + (window.previewPanY - mouseY) * zoomRatio;
+                    window.previewZoom = newZoom;
+                    renderPreview();
+                }
             });
         })();
+        
+        function extractMetadataFromData(data) {
+            // Extract all named features for the Map Features panel
+            const namedFeatures = {
+                highways: [],
+                roads: [],
+                water: [],
+                parks: [],
+                railways: [],
+                buildings: []
+            };
+            let totalMetadataBytes = 0;
+            
+            // Extract subway route relations
+            const subwayRoutes = [];
+            for (const el of (data.elements || [])) {
+                if (el.type === 'relation' && el.tags && el.tags.route === 'subway') {
+                    subwayRoutes.push({
+                        ref: el.tags.ref || '?',
+                        name: el.tags.name || 'Unknown',
+                        colour: el.tags.colour || el.tags.color || '#da77f2',
+                        network: el.tags.network || '',
+                        operator: el.tags.operator || ''
+                    });
+                }
+            }
+            
+            for (const el of (data.elements || [])) {
+                if (el.type !== 'way' || !el.tags) continue;
+                
+                const name = el.tags.name;
+                const ref = el.tags.ref;
+                if (!name && !ref) continue;
+                
+                const label = ref ? (name ? `${ref} - ${name}` : ref) : name;
+                const bytes = (label || '').length + 1;
+                
+                if (el.tags.highway) {
+                    if (['motorway', 'trunk', 'motorway_link', 'trunk_link'].includes(el.tags.highway)) {
+                        if (!namedFeatures.highways.find(f => f.label === label)) {
+                            namedFeatures.highways.push({ label, ref, name, bytes });
+                            totalMetadataBytes += bytes;
+                        }
+                    } else if (['primary', 'secondary', 'tertiary', 'residential'].includes(el.tags.highway)) {
+                        if (!namedFeatures.roads.find(f => f.label === label)) {
+                            namedFeatures.roads.push({ label, ref, name, bytes });
+                            totalMetadataBytes += bytes;
+                        }
+                    }
+                } else if (el.tags.natural === 'water' || el.tags.waterway) {
+                    if (!namedFeatures.water.find(f => f.label === label)) {
+                        namedFeatures.water.push({ label, ref, name, bytes });
+                        totalMetadataBytes += bytes;
+                    }
+                } else if (el.tags.leisure === 'park' || el.tags.landuse === 'grass') {
+                    if (!namedFeatures.parks.find(f => f.label === label)) {
+                        namedFeatures.parks.push({ label, ref, name, bytes });
+                        totalMetadataBytes += bytes;
+                    }
+                } else if (el.tags.railway) {
+                    if (!namedFeatures.railways.find(f => f.label === label)) {
+                        namedFeatures.railways.push({ label, ref, name, bytes });
+                        totalMetadataBytes += bytes;
+                    }
+                } else if (el.tags.building) {
+                    if (!namedFeatures.buildings.find(f => f.label === label)) {
+                        namedFeatures.buildings.push({ label, ref, name, bytes });
+                        totalMetadataBytes += bytes;
+                    }
+                }
+            }
+            
+            // Add subway routes to metadata size
+            for (const r of subwayRoutes) {
+                totalMetadataBytes += (r.name || '').length + (r.ref || '').length + 2;
+            }
+            
+            // Display Map Features panel
+            const featuresPanel = document.getElementById('mapFeaturesPanel');
+            const featuresList = document.getElementById('mapFeaturesList');
+            const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
+            const buildingNamesChecked = document.getElementById('buildingNames')?.checked || false;
+            const totalNamedFeatures = namedFeatures.highways.length + namedFeatures.roads.length + 
+                namedFeatures.water.length + namedFeatures.parks.length + namedFeatures.railways.length + 
+                namedFeatures.buildings.length + subwayRoutes.length;
+            
+            if (totalNamedFeatures > 0 && (nameDetailLevel > 0 || buildingNamesChecked)) {
+                const indexOverhead = totalNamedFeatures * 4;
+                const totalWithOverhead = totalMetadataBytes + indexOverhead;
+                
+                document.getElementById('metadataSizeEst').textContent = 
+                    `+${(totalWithOverhead / 1024).toFixed(1)} KB if included`;
+                
+                let html = '';
+                const addSection = (title, items, color) => {
+                    if (items.length === 0) return;
+                    html += `<div style="margin-bottom:8px;">`;
+                    html += `<div style="color:${color};font-weight:bold;margin-bottom:4px;">${title} (${items.length})</div>`;
+                    html += `<div style="color:#aaa;padding-left:8px;">`;
+                    const shown = items.slice(0, 10);
+                    html += shown.map(f => `<div style="margin:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.label}">${f.label}</div>`).join('');
+                    if (items.length > 10) {
+                        html += `<div style="color:#666;font-style:italic;">...and ${items.length - 10} more</div>`;
+                    }
+                    html += `</div></div>`;
+                };
+                
+                addSection('Highways', namedFeatures.highways, '#ff6b6b');
+                addSection('Roads', namedFeatures.roads, '#ffd93d');
+                addSection('Water', namedFeatures.water, '#4dabf7');
+                addSection('Parks', namedFeatures.parks, '#69db7c');
+                addSection('Railways', namedFeatures.railways, '#da77f2');
+                
+                featuresList.innerHTML = html;
+                featuresPanel.style.display = 'block';
+                
+                // Store for use in binary generation and size estimates
+                window.extractedMetadata = {
+                    namedFeatures,
+                    subwayRoutes: subwayRoutes,
+                    totalBytes: totalWithOverhead
+                };
+            } else {
+                featuresPanel.style.display = 'none';
+                window.extractedMetadata = null;
+            }
+            
+            // Display subway routes if any found
+            const routesList = document.getElementById('subwayRoutesList');
+            if (subwayRoutes.length > 0) {
+                subwayRoutes.sort((a, b) => a.ref.localeCompare(b.ref, undefined, {numeric: true}));
+                const seen = new Set();
+                const uniqueRoutes = subwayRoutes.filter(r => {
+                    if (seen.has(r.ref)) return false;
+                    seen.add(r.ref);
+                    return true;
+                });
+                
+                routesList.innerHTML = '<div style="color:#4cc9f0;margin-bottom:4px;">Detected Routes:</div>' +
+                    uniqueRoutes.map(r => 
+                        `<div style="display:flex;align-items:center;gap:6px;margin:2px 0;">` +
+                        `<span style="background:${r.colour};color:#fff;padding:1px 6px;border-radius:3px;font-weight:bold;min-width:24px;text-align:center;">${r.ref}</span>` +
+                        `<span style="color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.name}">${r.name}</span>` +
+                        `</div>`
+                    ).join('');
+                routesList.style.display = 'block';
+            } else {
+                routesList.style.display = 'none';
+            }
+            
+            return { namedFeatures, subwayRoutes, totalMetadataBytes };
+        }
         
         async function previewMap() {
             if (!selectedBounds) {
@@ -1880,154 +2414,8 @@
                 
                 const data = await response.json();
                 
-                // Extract subway route relations and display them
-                const subwayRoutes = [];
-                for (const el of (data.elements || [])) {
-                    if (el.type === 'relation' && el.tags && el.tags.route === 'subway') {
-                        subwayRoutes.push({
-                            ref: el.tags.ref || '?',
-                            name: el.tags.name || 'Unknown',
-                            colour: el.tags.colour || el.tags.color || '#da77f2',
-                            network: el.tags.network || '',
-                            operator: el.tags.operator || ''
-                        });
-                    }
-                }
-                
-                // Display subway routes if any found
-                const routesList = document.getElementById('subwayRoutesList');
-                if (subwayRoutes.length > 0) {
-                    // Sort by ref
-                    subwayRoutes.sort((a, b) => a.ref.localeCompare(b.ref, undefined, {numeric: true}));
-                    // Remove duplicates by ref
-                    const seen = new Set();
-                    const uniqueRoutes = subwayRoutes.filter(r => {
-                        if (seen.has(r.ref)) return false;
-                        seen.add(r.ref);
-                        return true;
-                    });
-                    
-                    routesList.innerHTML = '<div style="color:#4cc9f0;margin-bottom:4px;">Detected Routes:</div>' +
-                        uniqueRoutes.map(r => 
-                            `<div style="display:flex;align-items:center;gap:6px;margin:2px 0;">` +
-                            `<span style="background:${r.colour};color:#fff;padding:1px 6px;border-radius:3px;font-weight:bold;min-width:24px;text-align:center;">${r.ref}</span>` +
-                            `<span style="color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.name}">${r.name}</span>` +
-                            `</div>`
-                        ).join('');
-                    routesList.style.display = 'block';
-                    console.log('Subway routes found:', uniqueRoutes);
-                } else {
-                    routesList.style.display = 'none';
-                }
-                
-                // Extract all named features for the Map Features panel
-                const namedFeatures = {
-                    highways: [],
-                    roads: [],
-                    water: [],
-                    parks: [],
-                    railways: []
-                };
-                let totalMetadataBytes = 0;
-                
-                for (const el of (data.elements || [])) {
-                    if (el.type !== 'way' || !el.tags) continue;
-                    
-                    const name = el.tags.name;
-                    const ref = el.tags.ref;
-                    if (!name && !ref) continue;
-                    
-                    const label = ref ? (name ? `${ref} - ${name}` : ref) : name;
-                    const bytes = (label || '').length + 1; // +1 for null terminator
-                    
-                    if (el.tags.highway) {
-                        if (['motorway', 'trunk', 'motorway_link', 'trunk_link'].includes(el.tags.highway)) {
-                            if (!namedFeatures.highways.find(f => f.label === label)) {
-                                namedFeatures.highways.push({ label, ref, name, bytes });
-                                totalMetadataBytes += bytes;
-                            }
-                        } else if (['primary', 'secondary', 'tertiary', 'residential'].includes(el.tags.highway)) {
-                            if (!namedFeatures.roads.find(f => f.label === label)) {
-                                namedFeatures.roads.push({ label, ref, name, bytes });
-                                totalMetadataBytes += bytes;
-                            }
-                        }
-                    } else if (el.tags.natural === 'water' || el.tags.waterway) {
-                        if (!namedFeatures.water.find(f => f.label === label)) {
-                            namedFeatures.water.push({ label, ref, name, bytes });
-                            totalMetadataBytes += bytes;
-                        }
-                    } else if (el.tags.leisure === 'park' || el.tags.landuse === 'grass') {
-                        if (!namedFeatures.parks.find(f => f.label === label)) {
-                            namedFeatures.parks.push({ label, ref, name, bytes });
-                            totalMetadataBytes += bytes;
-                        }
-                    } else if (el.tags.railway) {
-                        if (!namedFeatures.railways.find(f => f.label === label)) {
-                            namedFeatures.railways.push({ label, ref, name, bytes });
-                            totalMetadataBytes += bytes;
-                        }
-                    }
-                }
-                
-                // Add subway routes to metadata size
-                for (const r of subwayRoutes) {
-                    totalMetadataBytes += (r.name || '').length + (r.ref || '').length + 2;
-                }
-                
-                // Display Map Features panel (only if names will be included)
-                const featuresPanel = document.getElementById('mapFeaturesPanel');
-                const featuresList = document.getElementById('mapFeaturesList');
-                const nameDetailLevel = parseInt(document.getElementById('nameDetail').value);
-                const totalNamedFeatures = namedFeatures.highways.length + namedFeatures.roads.length + 
-                    namedFeatures.water.length + namedFeatures.parks.length + namedFeatures.railways.length + subwayRoutes.length;
-                
-                if (totalNamedFeatures > 0 && nameDetailLevel > 0) {
-                    // Overhead for index table: ~4 bytes per feature (id + offset)
-                    const indexOverhead = totalNamedFeatures * 4;
-                    const totalWithOverhead = totalMetadataBytes + indexOverhead;
-                    
-                    document.getElementById('metadataSizeEst').textContent = 
-                        `+${(totalWithOverhead / 1024).toFixed(1)} KB if included`;
-                    
-                    let html = '';
-                    
-                    const addSection = (title, items, color) => {
-                        if (items.length === 0) return;
-                        html += `<div style="margin-bottom:8px;">`;
-                        html += `<div style="color:${color};font-weight:bold;margin-bottom:4px;">${title} (${items.length})</div>`;
-                        html += `<div style="color:#aaa;padding-left:8px;">`;
-                        // Show first 10, then "and X more"
-                        const shown = items.slice(0, 10);
-                        html += shown.map(f => `<div style="margin:1px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${f.label}">${f.label}</div>`).join('');
-                        if (items.length > 10) {
-                            html += `<div style="color:#666;font-style:italic;">...and ${items.length - 10} more</div>`;
-                        }
-                        html += `</div></div>`;
-                    };
-                    
-                    addSection('Highways', namedFeatures.highways, '#ff6b6b');
-                    addSection('Roads', namedFeatures.roads, '#ffd93d');
-                    addSection('Water', namedFeatures.water, '#4dabf7');
-                    addSection('Parks', namedFeatures.parks, '#69db7c');
-                    addSection('Railways', namedFeatures.railways, '#da77f2');
-                    
-                    featuresList.innerHTML = html;
-                    featuresPanel.style.display = 'block';
-                    
-                    // Store for use in binary generation
-                    window.extractedMetadata = {
-                        namedFeatures,
-                        subwayRoutes: subwayRoutes,
-                        totalBytes: totalWithOverhead
-                    };
-                    
-                    console.log('Named features:', namedFeatures);
-                    console.log('Metadata size estimate:', totalWithOverhead, 'bytes');
-                } else {
-                    featuresPanel.style.display = 'none';
-                    window.extractedMetadata = null;
-                }
+                // Extract metadata using shared function
+                extractMetadataFromData(data);
                 
                 // CLIP ALL GEOMETRY TO BOUNDS (and polygon if drawn) before storing
                 const bounds = selectedBounds;
@@ -2118,6 +2506,9 @@
                     renderPreview();
                     document.getElementById('featureCount').textContent = window.previewFeatureCount || 0;
                     setStatus('ready', 'Preview: ' + (window.previewFeatureCount || 0) + ' features. Adjust settings and regenerate, or generate file.');
+                    
+                    // Update stats to refresh size breakdown with actual building names data
+                    updateStats();
                 });
                 
             } catch (error) {
@@ -2208,12 +2599,16 @@
                 const data = await response.json();
                 debugLog('FETCH', 'Received elements:', data.elements?.length || 0);
                 
+                // Extract metadata for display (same as preview)
+                extractMetadataFromData(data);
+                updateStats();
+                
                 setStatus('working', 'Converting to binary format...');
                 setProgress(70);
                 
                 // Convert to binary
-                const hwmapBlob = convertToHWMap(data);
-                debugLog('OUTPUT', 'Generated blob size:', hwmapBlob.size + ' bytes');
+                const hwmapResult = convertToHWMap(data);
+                debugLog('OUTPUT', 'Generated blob size:', hwmapResult.blob.size + ' bytes');
                 
                 setProgress(90);
                 
@@ -2221,7 +2616,10 @@
                 const regionName = document.getElementById('regionName').value || 'map';
                 const filename = regionName.toLowerCase().replace(/[^a-z0-9]/g, '_') + '.hwmap';
                 
-                downloadBlob(hwmapBlob, filename);
+                downloadBlob(hwmapResult.blob, filename);
+                
+                // Display actual results
+                displayActualResults(hwmapResult);
                 
                 setProgress(100);
                 setStatus('success', 'Download started! Upload to device at /maps/');
@@ -2390,7 +2788,7 @@
             debugLog('CONVERT', 'Input elements:', osmData.elements?.length || 0);
             
             // Process features
-            const features = [];
+            let features = [];
             const detailLevel = parseInt(document.getElementById('detailLevel').value);
             const maxPointsPerFeature = parseInt(document.getElementById('maxPoints').value);
             const autoFitBudget = document.getElementById('autoFitBudget').checked;
@@ -2413,7 +2811,14 @@
             const nameList = [];        // ordered list of unique names
             
             // Check if a feature type should get a name based on name detail level
+            const includeBuildingNames = document.getElementById('buildingNames')?.checked || false;
+            
             function shouldIncludeName(featureType) {
+                // Building names controlled by separate checkbox
+                if (featureType === FEATURE_TYPES.BUILDING) {
+                    return includeBuildingNames;
+                }
+                
                 if (nameDetailLevel === 0) return false;  // None
                 if (nameDetailLevel === 1) {
                     // Highways only
@@ -2431,7 +2836,7 @@
                            featureType === FEATURE_TYPES.ROAD_MINOR ||
                            featureType === FEATURE_TYPES.ROAD_PATH;
                 }
-                // Level 4 = everything
+                // Level 4 = everything (except buildings, handled above)
                 return true;
             }
             
@@ -2483,6 +2888,62 @@
                 if (points.length < 2) {
                     skippedTooShort++;
                     continue;
+                }
+                
+                // Extra aggressive simplification for buildings (reduce to 4-6 points max)
+                const simplifyBuildingsChecked = document.getElementById('simplifyBuildings')?.checked;
+                if (featureType === FEATURE_TYPES.BUILDING && simplifyBuildingsChecked) {
+                    // Buildings are usually rectangles - simplify to bounding box or minimal polygon
+                    if (points.length > 6) {
+                        // Use more aggressive tolerance for buildings
+                        points = simplifyPoints(element.geometry, tolerance * 5);
+                        // If still too many points, reduce to 4 (bounding box)
+                        if (points.length > 6) {
+                            points = resamplePoints(points, 4);
+                        }
+                    }
+                }
+                
+                // Aggressive simplification for residential roads (reduce to 3-4 points)
+                const simplifyResidentialChecked = document.getElementById('simplifyResidential')?.checked;
+                if (featureType === FEATURE_TYPES.ROAD_MINOR && simplifyResidentialChecked) {
+                    // Residential roads often have many small curves - simplify aggressively
+                    if (points.length > 4) {
+                        // Use 3x more aggressive tolerance for residential roads
+                        points = simplifyPoints(element.geometry, tolerance * 3);
+                        // If still too many points, reduce to 4 max
+                        if (points.length > 4) {
+                            points = resamplePoints(points, 4);
+                        }
+                    }
+                }
+                
+                // Simplification for water bodies (reduce to 6-8 points)
+                const simplifyWaterChecked = document.getElementById('simplifyWater')?.checked;
+                if (featureType === FEATURE_TYPES.WATER && simplifyWaterChecked) {
+                    // Water bodies can have very complex coastlines - simplify moderately
+                    if (points.length > 8) {
+                        // Use 2x more aggressive tolerance for water
+                        points = simplifyPoints(element.geometry, tolerance * 2);
+                        // If still too many points, reduce to 8 max
+                        if (points.length > 8) {
+                            points = resamplePoints(points, 8);
+                        }
+                    }
+                }
+                
+                // Simplification for parks/nature (reduce to 6-8 points)
+                const simplifyParksChecked = document.getElementById('simplifyParks')?.checked;
+                if (featureType === FEATURE_TYPES.PARK && simplifyParksChecked) {
+                    // Parks often have irregular boundaries - simplify moderately
+                    if (points.length > 8) {
+                        // Use 2x more aggressive tolerance for parks
+                        points = simplifyPoints(element.geometry, tolerance * 2);
+                        // If still too many points, reduce to 8 max
+                        if (points.length > 8) {
+                            points = resamplePoints(points, 8);
+                        }
+                    }
                 }
                 
                 // Limit points per feature
@@ -2586,14 +3047,31 @@
             
             debugLog('CONVERT', 'Names after trimming:', finalNameList.length);
             
-            // Log point distribution
+            // Log point distribution and track bytes per feature type
             let totalPoints = 0;
             let maxPts = 0;
             let namedCount = 0;
+            const typeBreakdown = {};
+            const typeNames = {
+                [FEATURE_TYPES.ROAD_HIGHWAY]: 'Highways',
+                [FEATURE_TYPES.ROAD_MAJOR]: 'Major Roads',
+                [FEATURE_TYPES.ROAD_MINOR]: 'Minor Roads',
+                [FEATURE_TYPES.ROAD_PATH]: 'Paths',
+                [FEATURE_TYPES.WATER]: 'Water',
+                [FEATURE_TYPES.PARK]: 'Parks/Nature',
+                [FEATURE_TYPES.RAILWAY]: 'Railways',
+                [FEATURE_TYPES.BUILDING]: 'Buildings'
+            };
             for (const f of trimmedFeatures) {
                 totalPoints += f.points.length;
                 if (f.points.length > maxPts) maxPts = f.points.length;
                 if (f.nameIndex !== HWMAP_NO_NAME) namedCount++;
+                // Track bytes per type: type(1) + nameIdx(2) + count(1) + firstPt(8) + deltas((n-1)*4)
+                const featureBytes = 4 + 8 + (f.points.length - 1) * 4;
+                const typeName = typeNames[f.type] || 'Other';
+                if (!typeBreakdown[typeName]) typeBreakdown[typeName] = { bytes: 0, count: 0 };
+                typeBreakdown[typeName].bytes += featureBytes;
+                typeBreakdown[typeName].count++;
             }
             debugLog('CONVERT', 'Total points:', totalPoints, 'Max points per feature:', maxPts);
             debugLog('CONVERT', 'Named features:', namedCount, '/', trimmedFeatures.length);
@@ -2744,7 +3222,19 @@
             debugLog('CONVERT', 'Named features:', namedCount, '/', trimmedFeatures.length);
             debugLog('CONVERT', 'Unique names:', finalNameList.length);
             
-            return new Blob([buffer], { type: 'application/octet-stream' });
+            return {
+                blob: new Blob([buffer], { type: 'application/octet-stream' }),
+                stats: {
+                    fileSize: bufferSize,
+                    featureCount: trimmedFeatures.length,
+                    namedCount: namedCount,
+                    nameCount: finalNameList.length,
+                    totalPoints: totalPoints,
+                    maxPoints: maxPts,
+                    typeBreakdown: typeBreakdown,
+                    nameTableSize: finalNameTableSize
+                }
+            };
         }
         
         function classifyFeature(tags) {
@@ -2903,6 +3393,14 @@
             updateStats();
         });
         
+        // Building names checkbox
+        document.getElementById('buildingNames')?.addEventListener('change', () => {
+            const level = parseInt(document.getElementById('nameDetail').value);
+            updateNameDetailLabel();
+            updateFilteredFeatureList(level);
+            updateStats();
+        });
+        
         function updateNameDetailLabel() {
             const level = parseInt(document.getElementById('nameDetail').value);
             const labels = ['None', 'Highways Only', 'Major Roads', 'All Roads', 'Everything'];
@@ -2916,10 +3414,11 @@
             document.getElementById('nameDetailValue').textContent = labels[level];
             document.getElementById('nameDetailDesc').textContent = descs[level];
             
-            // Hide/show Map Features panel based on name detail level
+            // Hide/show Map Features panel based on name detail level OR building names checkbox
             const featuresPanel = document.getElementById('mapFeaturesPanel');
+            const buildingNamesChecked = document.getElementById('buildingNames')?.checked || false;
             if (featuresPanel) {
-                featuresPanel.style.display = (level === 0) ? 'none' : 'block';
+                featuresPanel.style.display = (level === 0 && !buildingNamesChecked) ? 'none' : 'block';
             }
             
             // Update the feature list to show only what will be included
@@ -2927,7 +3426,10 @@
         }
         
         function updateFilteredFeatureList(level) {
-            if (!window.extractedMetadata || level === 0) return;
+            const buildingNamesChecked = document.getElementById('buildingNames')?.checked || false;
+            if (!window.extractedMetadata) return;
+            // Allow showing list if building names checked even when level is 0
+            if (level === 0 && !buildingNamesChecked) return;
             
             const featuresList = document.getElementById('mapFeaturesList');
             const metadataSizeEl = document.getElementById('metadataSizeEst');
@@ -2958,6 +3460,7 @@
             // Level 2: Highways + major roads  
             // Level 3: All roads
             // Level 4: Everything
+            // Building names: separate checkbox
             
             if (level >= 1) addSection('Highways', namedFeatures.highways || [], '#ff6b6b');
             if (level >= 2) addSection('Roads', namedFeatures.roads || [], '#ffd93d');
@@ -2967,19 +3470,49 @@
                 addSection('Railways', namedFeatures.railways || [], '#da77f2');
             }
             
-            featuresList.innerHTML = html || '<div style="color:#666;font-style:italic;">No features match current filter</div>';
+            // Building names shown if checkbox is checked (use variable from top of function)
+            if (buildingNamesChecked && namedFeatures.buildings) {
+                addSection('Buildings', namedFeatures.buildings, '#b197fc');
+            }
             
-            // Update size estimate
-            if (metadataSizeEl && totalCount > 0) {
-                const overhead = totalCount * 4 + totalBytes;
-                metadataSizeEl.textContent = `+${(overhead / 1024).toFixed(1)} KB`;
-            } else if (metadataSizeEl) {
-                metadataSizeEl.textContent = '';
+            featuresList.innerHTML = html || '<div style="color:#666;font-style:italic;">No names match current settings</div>';
+            
+            // Calculate building names separately
+            let buildingCount = 0;
+            let buildingBytes = 0;
+            if (buildingNamesChecked && namedFeatures.buildings) {
+                buildingCount = namedFeatures.buildings.length;
+                for (const f of namedFeatures.buildings) buildingBytes += (f.bytes || 20);
+            }
+            
+            // Non-building totals
+            const otherCount = totalCount - buildingCount;
+            const otherBytes = totalBytes - buildingBytes;
+            
+            // Update summary with actual counts - split buildings from others
+            const nameSummary = document.getElementById('nameSummary');
+            const buildingNameSummary = document.getElementById('buildingNameSummary');
+            
+            if (otherCount > 0) {
+                const otherKB = (otherBytes / 1024).toFixed(1);
+                if (metadataSizeEl) metadataSizeEl.textContent = `+${otherKB} KB if included`;
+                if (nameSummary) nameSummary.textContent = `Roads/Terrain: ${otherCount} names (~${otherKB} KB)`;
+            } else {
+                if (metadataSizeEl) metadataSizeEl.textContent = '';
+                if (nameSummary) nameSummary.textContent = '';
+            }
+            
+            if (buildingCount > 0) {
+                const buildingKB = (buildingBytes / 1024).toFixed(1);
+                if (buildingNameSummary) buildingNameSummary.textContent = `Buildings: ${buildingCount} names (+${buildingKB} KB if included)`;
+            } else {
+                if (buildingNameSummary) buildingNameSummary.textContent = '';
             }
         }
         
-        // Initialize label
+        // Initialize label and simplification states
         updateNameDetailLabel();
+        updateSimplificationStates();
     </script>
 </body>
 </html>
