@@ -692,6 +692,13 @@
             background-image: none !important;
             position: relative;
         }
+        /* Waypoint button - clear default sprite background */
+        .leaflet-draw-draw-waypoint {
+            background-image: none !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
         .leaflet-draw-draw-polygon::after {
             content: '';
             position: absolute;
@@ -727,11 +734,6 @@
                 </div>
                 <div style="position:relative;">
                     <div id="map"></div>
-                    <!-- Waypoint button - styled to match Leaflet Draw toolbar -->
-                    <div id="waypointControl" style="position:absolute;top:168px;left:11px;z-index:1000;">
-                        <a id="waypointModeBtn" href="#" onclick="toggleWaypointModeFromMap(); return false;" title="Add Waypoint" 
-                           style="display:flex;align-items:center;justify-content:center;width:26px;height:26px;background:#fff;border:1px solid #ccc;border-radius:4px;font-size:14px;text-decoration:none;box-shadow:0 1px 5px rgba(0,0,0,0.4);">📍</a>
-                    </div>
                     <!-- Map controls overlay - shows after selection -->
                     <div class="map-controls" id="mapControls" style="display:none;">
                         <button class="map-control-btn" id="clearSelectionBtn" onclick="clearSelection()" title="Clear Selection">X</button>
@@ -1545,6 +1547,21 @@
             edit: false
         });
         map.addControl(drawControl);
+        
+        // Inject waypoint button into the draw toolbar
+        setTimeout(() => {
+            const drawToolbar = document.querySelector('.leaflet-draw-toolbar');
+            if (drawToolbar) {
+                const waypointBtn = document.createElement('a');
+                waypointBtn.id = 'waypointModeBtn';
+                waypointBtn.className = 'leaflet-draw-draw-waypoint';
+                waypointBtn.href = '#';
+                waypointBtn.title = 'Add Waypoint';
+                waypointBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
+                waypointBtn.onclick = (e) => { e.preventDefault(); toggleWaypointModeFromMap(); };
+                drawToolbar.appendChild(waypointBtn);
+            }
+        }, 0);
         
         // Current selection - can be bounds (rect) or polygon
         let selectedBounds = null;
@@ -2558,6 +2575,21 @@
             
             // Re-enable drawing tools
             map.addControl(drawControl);
+            
+            // Re-inject waypoint button into draw toolbar
+            setTimeout(() => {
+                const drawToolbar = document.querySelector('.leaflet-draw-toolbar');
+                if (drawToolbar && !document.getElementById('waypointModeBtn')) {
+                    const waypointBtn = document.createElement('a');
+                    waypointBtn.id = 'waypointModeBtn';
+                    waypointBtn.className = 'leaflet-draw-draw-waypoint';
+                    waypointBtn.href = '#';
+                    waypointBtn.title = 'Add Waypoint';
+                    waypointBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`;
+                    waypointBtn.onclick = (e) => { e.preventDefault(); toggleWaypointModeFromMap(); };
+                    drawToolbar.appendChild(waypointBtn);
+                }
+            }, 0);
             
             setStatus('ready', 'Draw a shape on the map to select area');
             clearStats();
